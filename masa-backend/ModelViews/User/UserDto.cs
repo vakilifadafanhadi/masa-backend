@@ -2,14 +2,10 @@
 {
     public class UserDto:BaseEntityDto
     {
-        public string Token { get; set; } = default!;
-        public string UserName { get; set; } = default!;
-        public string Key { get; set; } = default!;
-        public string Pass { get; set; } = default!;
-        public PersonalInformationDto PersonalInformation { get; set; }
-        public UserDto()
-        {
-            PersonalInformation = new PersonalInformationDto();
-        }
+        public string? Token { get; set; }
+        public string? UserName { get; set; }
+        public string? Key { get; set; }
+        public string? Pass { get; set; }
+        public string NationalCode { get; set; } = default!;
     }
 }

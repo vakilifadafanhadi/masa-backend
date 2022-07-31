@@ -1,4 +1,4 @@
-﻿        using AutoMapper;
+﻿using AutoMapper;
 using masa_backend.Models;
 
 namespace masa_backend.ModelViews

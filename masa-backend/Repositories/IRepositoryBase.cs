@@ -5,5 +5,7 @@
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         IQueryable<T> GetByQuery();
+        Task SaveAsync();
+        void Save();
     }
 }

@@ -34,5 +34,13 @@ namespace masa_backend.Repositories
         {
             return this.RepositoryContext.Set<T>().AsNoTracking();
         }
+        public async Task SaveAsync()
+        {
+            await RepositoryContext.SaveChangesAsync();
+        }
+        public void Save()
+        {
+            RepositoryContext.SaveChanges();
+        }
     }
 }

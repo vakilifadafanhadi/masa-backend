@@ -9,17 +9,38 @@ namespace masa_backend.Controllers.payment
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly RepositoryWrapper _repository;
-        public UserController(RepositoryWrapper repository)
+        private readonly IRepositoryWrapper _repository;
+        public UserController(IRepositoryWrapper repository)
         {
             _repository = repository;
         }
-        [HttpPost,Route(template:"[action]")]
-        public async Task<IActionResult> Register(UserDto user)
+        [HttpPost, Route(template: "[action]")]
+        public async Task<IActionResult> Register(RegisterModelView request)
         {
-            await _repository.UserRepository.AddAsync(user);
-            await _repository.SaveAsync();
-            return Ok();
+            try
+            {
+                await _repository.PersonalInformationRepository.AddAsync(
+                    new PersonalInformationDto
+                    {
+                        LastName = request.LastName,
+                        NationalCode = request.NationalCode,
+                        Mobile = request.Mobile
+                    });
+                await _repository.UserRepository.AddAsync(
+                    new UserDto
+                    {
+                        NationalCode = request.NationalCode
+                    });
+                await _repository.SaveAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            finally
+            {
+            }
         }
     }
 }

@@ -4,17 +4,15 @@ namespace masa_backend.Models
 {
     public class PersonalInformation : BaseEntity
     {
-        private string nationalCode = default!;
-        private readonly string lastName = default!;
         [Required]
         [StringLength(10)]
-        public string NationalCode { get => nationalCode; set => nationalCode = value; }
+        public string NationalCode { get; set; } = default!;
         public string? FatherFirstName { get; set; }
         public string? FatherLastName { get; set; }
         public DateTime? BirthDate { get; set; }
         public string? FirstName { get; set; }
         [Required]
-        public string LastName { get => lastName; set => nationalCode = value; }
+        public string LastName { get; set; } = default!;
         public string? Email { get; set; }
         public string? Address { get; set; }
         public City? City { get; set; }
@@ -23,7 +21,7 @@ namespace masa_backend.Models
         [Required]
         [StringLength(11)]
         public string Mobile { get; set; } = default!;
-        public User User { get; set; }
+        public User? User { get; set; }
         public PersonalInformation()
         {
             City = new City();
