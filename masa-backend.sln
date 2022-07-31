@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32616.157
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "masa-backend", "masa-backend\masa-backend.csproj", "{747F95D6-9E6A-4D1E-8BA1-5246DC7E5F4B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{747F95D6-9E6A-4D1E-8BA1-5246DC7E5F4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{747F95D6-9E6A-4D1E-8BA1-5246DC7E5F4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{747F95D6-9E6A-4D1E-8BA1-5246DC7E5F4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{747F95D6-9E6A-4D1E-8BA1-5246DC7E5F4B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {79FB9C18-26F0-4A87-9090-34D5445F2CA6}
+	EndGlobalSection
+EndGlobal
