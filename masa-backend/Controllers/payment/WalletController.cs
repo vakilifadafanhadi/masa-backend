@@ -1,5 +1,6 @@
 ﻿using Dto.Other;
 using Dto.Payment;
+using Dto.Response.Payment;
 using masa_backend.ModelViews;
 using masa_backend.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -41,23 +42,52 @@ namespace masa_backend.Controllers.payment
                 throw;
             }
         }
-        [HttpPost, Route(template:"[action]/{userId}")]
+        [HttpPost, Route(template: "[action]/{personId}")]
         public async Task<IActionResult> Deposit(DtoRequest request, [FromRoute] Guid personId)
         {
-            var result = await _payment.Request(request, Payment.Mode.sandbox);
-            var person = _repository.PersonalInformationRepository.Get(personId);
-            var history = await _repository.WalletHistoryRepository.AddAsync(new WalletHistoryDto
-            {
-                Transaction = true,//send
-                TransactionStatus = result.Status,
-                WalletId = person.WalletId,
-                DtoRequest = JsonSerializer.Serialize(request)
-            });
-            history.Wallet.Amount = "1";
-            return Ok(result);
-                //Redirect($"https://sandbox.zarinpal.com/pg/StartPay/{result.Authority}");
-        }
 
+            var result = await _payment.Request(request, Payment.Mode.sandbox);
+            ResponceMV responce = new();
+            var person = _repository.PersonalInformationRepository.Get(personId);
+            if (person == null)
+                return NotFound(responce);
+            WalletDto searchWallet = new();
+            if (person.WalletId == Guid.Empty)
+            {
+                searchWallet = _repository.WalletRepository.GetByPersonId(personId);
+                if (searchWallet == null)
+                {
+                    searchWallet = await _repository.WalletRepository.AddAsync(
+                        new WalletDto
+                        {
+                            PersonId = person.Id
+                        });
+                }
+                person.WalletId = searchWallet.Id;
+                await _repository.PersonalInformationRepository.UpdateAsync(person);
+            }
+            await _repository.WalletHistoryRepository.AddAsync(
+                new WalletHistoryDto
+                {
+                    Transaction = true,//send
+                    TransactionStatus = result.Status,
+                    WalletId = person.WalletId,
+                    DtoRequest = JsonSerializer.Serialize(request)
+                });
+            if (searchWallet == new WalletDto())
+                searchWallet = _repository.WalletRepository.Get((Guid)person.WalletId!);
+            if (searchWallet == null)
+                return NoContent();
+            searchWallet.Amount = (int.Parse(searchWallet.Amount) + request.Amount).ToString();
+            await _repository.WalletRepository.UpdateAsync(searchWallet);
+            await _repository.SaveAsync();
+            return Redirect($"https://sandbox.zarinpal.com/pg/StartPay/{result.Authority}");
+        }
+        [HttpGet, Route("[action]/{personId}")]
+        public void SaveTransaction([FromRoute]Guid personId)
+        {
+            
+        }
         /// <summary>
         /// ﻓﺮﺍﻳﻨﺪ ﺧﺮﻳﺪ ﺑﺎ ﺗﺴﻮﻳﻪ ﺍﺷﺘﺮﺍﻛﻲ 
         /// </summary>

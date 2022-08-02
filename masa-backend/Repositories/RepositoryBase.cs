@@ -27,7 +27,7 @@ namespace masa_backend.Repositories
 
             await Task.Run(() =>
             {
-                this.RepositoryContext.Set<T>().Update(entity);
+                RepositoryContext.Set<T>().Update(entity);
             });
         }
         public IQueryable<T> GetByQuery()
