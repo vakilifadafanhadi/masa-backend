@@ -4,15 +4,11 @@ namespace masa_backend.Models
 {
     public class Country : BaseEntity
     {
-        public string Name { get; set; } = default!;
-        public string PersianName { get; set; } = default!;
-        [Required]
+        public string? Name { get; set; }
         public int CountryCode { get; set; }
         public string? Continent { get; set; }
-        public List<Province> Provinces { get; set; }
-        public Country()
-        {
-            Provinces = new List<Province>();
-        }
+        public List<Province>? Provinces { get; set; }
+        public List<City>? Citys { get; set; }
+        public List<PersonalInformation>? PersonalInformation { get; set; }
     }
 }

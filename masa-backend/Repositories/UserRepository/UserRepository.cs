@@ -37,5 +37,11 @@ namespace masa_backend.Repositories
                 .Where(current => current.Id == id);
             return _mapper.Map<UserDto>(result);
         }
+        public UserDto Login(LoginModelView user)
+        {
+            var result = GetByQuery()
+                .Where(current => current.PersonalInformation.NationalCode == user.NationalCode).FirstOrDefault();
+            return _mapper.Map<UserDto>(result);
+        }
     }
 }

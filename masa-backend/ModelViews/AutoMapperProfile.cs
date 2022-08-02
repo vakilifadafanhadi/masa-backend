@@ -7,10 +7,13 @@ namespace masa_backend.ModelViews
     {
         public AutoMapperProfile()
         {
-            CreateMap<User, UserDto>().ReverseMap();
-            CreateMap<PersonalInformation, PersonalInformationDto>().ReverseMap();
             CreateMap<City, CityDto>().ReverseMap();
             CreateMap<Country, CountryDto>().ReverseMap();
+            CreateMap<PersonalInformation, PersonalInformationDto>().ReverseMap();
+            CreateMap<Province, ProvinceDto>().ReverseMap();
+            CreateMap<User, UserDto>().ReverseMap();
+            CreateMap<Wallet, WalletDto>().ReverseMap();
+            CreateMap<WalletHistory, WalletHistoryDto>().ReverseMap();
         }
     }
 }

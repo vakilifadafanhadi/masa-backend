@@ -15,11 +15,12 @@ namespace masa_backend.Controllers.payment
             _repository = repository;
         }
         [HttpPost, Route(template: "[action]")]
-        public async Task<IActionResult> Register(RegisterModelView request)
+        public async Task<ActionResult<ResponceMV>> Register(RegisterModelView request)
         {
+            ResponceMV responce = new();
             try
             {
-                await _repository.PersonalInformationRepository.AddAsync(
+                var person = await _repository.PersonalInformationRepository.AddAsync(
                     new PersonalInformationDto
                     {
                         LastName = request.LastName,
@@ -29,17 +30,48 @@ namespace masa_backend.Controllers.payment
                 await _repository.UserRepository.AddAsync(
                     new UserDto
                     {
-                        NationalCode = request.NationalCode
+                        PersonId = person.Id,
+                        UserName = request.NationalCode
+                    });
+                await _repository.WalletRepository.AddAsync(
+                    new WalletDto
+                    {
+                        PersonId = person.Id
                     });
                 await _repository.SaveAsync();
-                return Ok();
+                responce.Success = true;
+                return Ok(responce);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                responce.Add(ex);
+                return BadRequest(responce);
             }
             finally
             {
+                _repository.Dispose();
+            }
+        }
+        [HttpPost, Route(template: "[action]")]
+        public ActionResult<ResponceWithData<UserDto>> Login(LoginModelView request)
+        {
+            ResponceWithData<UserDto> responce = new();
+            try
+            {
+                var result = _repository.UserRepository.Login(request);
+                if (result == null)
+                {
+                    responce.Errors.Add("not found!");
+                    return NotFound(responce);
+                }
+                responce.Success = true;
+                responce.Data = result;
+                return Ok(responce);
+            }
+            catch (Exception ex)
+            {
+                responce.Add(ex);
+                return BadRequest(responce);
             }
         }
     }

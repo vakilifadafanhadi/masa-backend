@@ -12,8 +12,8 @@ using masa_backend;
 namespace masa_backend.Migrations
 {
     [DbContext(typeof(MasaDbContext))]
-    [Migration("20220731183929_init")]
-    partial class init
+    [Migration("20220801183443_modifyPerson")]
+    partial class modifyPerson
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -26,21 +26,23 @@ namespace masa_backend.Migrations
 
             modelBuilder.Entity("masa_backend.Models.City", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid?>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("CountryCode")
+                    b.Property<int?>("CityCode")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreateAt")
+                    b.Property<Guid?>("CountryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProvinceCode")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("ProvinceId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("RemoveAt")
                         .HasColumnType("datetime2");
@@ -50,14 +52,16 @@ namespace masa_backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProvinceCode");
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("ProvinceId");
 
                     b.ToTable("Cities");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Country", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid?>("Id")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Continent")
@@ -66,15 +70,10 @@ namespace masa_backend.Migrations
                     b.Property<int>("CountryCode")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreateAt")
+                    b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PersianName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("RemoveAt")
@@ -90,7 +89,7 @@ namespace masa_backend.Migrations
 
             modelBuilder.Entity("masa_backend.Models.PersonalInformation", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid?>("Id")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Address")
@@ -105,7 +104,7 @@ namespace masa_backend.Migrations
                     b.Property<Guid?>("CountryId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreateAt")
+                    b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
@@ -121,18 +120,13 @@ namespace masa_backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Mobile")
-                        .IsRequired()
-                        .HasMaxLength(11)
-                        .HasColumnType("nvarchar(11)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NationalCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<Guid?>("ProvinceId")
                         .HasColumnType("uniqueidentifier");
@@ -143,6 +137,12 @@ namespace masa_backend.Migrations
                     b.Property<DateTime?>("UpdateAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("WalletId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CityId");
@@ -150,7 +150,8 @@ namespace masa_backend.Migrations
                     b.HasIndex("CountryId");
 
                     b.HasIndex("NationalCode")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[NationalCode] IS NOT NULL");
 
                     b.HasIndex("ProvinceId");
 
@@ -159,20 +160,19 @@ namespace masa_backend.Migrations
 
             modelBuilder.Entity("masa_backend.Models.Province", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid?>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("CountryCode")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("CountryId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreateAt")
+                    b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProvinceCode")
+                    b.Property<int?>("ProvinceCode")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("RemoveAt")
@@ -183,60 +183,122 @@ namespace masa_backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CountryCode");
+                    b.HasIndex("CountryId");
 
                     b.ToTable("Provinces");
                 });
 
             modelBuilder.Entity("masa_backend.Models.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid?>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreateAt")
+                    b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Key")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NationalCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Pass")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PersonId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("RemoveAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("nvarchar(16)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdateAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PersonId")
+                        .IsUnique()
+                        .HasFilter("[PersonId] IS NOT NULL");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.Wallet", b =>
+                {
+                    b.Property<Guid?>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Amount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("RemoveAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdateAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonId")
+                        .IsUnique()
+                        .HasFilter("[PersonId] IS NOT NULL");
+
+                    b.ToTable("Wallets");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.WalletHistory", b =>
+                {
+                    b.Property<Guid?>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RemoveAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("Transaction")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TransactionStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("WalletId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("WalletHistories");
                 });
 
             modelBuilder.Entity("masa_backend.Models.City", b =>
                 {
+                    b.HasOne("masa_backend.Models.Country", "Country")
+                        .WithMany("Citys")
+                        .HasForeignKey("CountryId");
+
                     b.HasOne("masa_backend.Models.Province", "Province")
-                        .WithMany("Cities")
-                        .HasForeignKey("ProvinceCode")
-                        .HasPrincipalKey("ProvinceCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("Citys")
+                        .HasForeignKey("ProvinceId");
+
+                    b.Navigation("Country");
 
                     b.Navigation("Province");
                 });
@@ -244,22 +306,15 @@ namespace masa_backend.Migrations
             modelBuilder.Entity("masa_backend.Models.PersonalInformation", b =>
                 {
                     b.HasOne("masa_backend.Models.City", "City")
-                        .WithMany()
+                        .WithMany("PersonalInformation")
                         .HasForeignKey("CityId");
 
                     b.HasOne("masa_backend.Models.Country", "Country")
-                        .WithMany()
+                        .WithMany("PersonalInformation")
                         .HasForeignKey("CountryId");
 
-                    b.HasOne("masa_backend.Models.User", "User")
-                        .WithOne("PersonalInformation")
-                        .HasForeignKey("masa_backend.Models.PersonalInformation", "NationalCode")
-                        .HasPrincipalKey("masa_backend.Models.User", "NationalCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("masa_backend.Models.Province", "Province")
-                        .WithMany()
+                        .WithMany("PersonalInformation")
                         .HasForeignKey("ProvinceId");
 
                     b.Navigation("City");
@@ -267,36 +322,75 @@ namespace masa_backend.Migrations
                     b.Navigation("Country");
 
                     b.Navigation("Province");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Province", b =>
                 {
                     b.HasOne("masa_backend.Models.Country", "Country")
                         .WithMany("Provinces")
-                        .HasForeignKey("CountryCode")
-                        .HasPrincipalKey("CountryCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CountryId");
 
                     b.Navigation("Country");
                 });
 
+            modelBuilder.Entity("masa_backend.Models.User", b =>
+                {
+                    b.HasOne("masa_backend.Models.PersonalInformation", "PersonalInformation")
+                        .WithOne("User")
+                        .HasForeignKey("masa_backend.Models.User", "PersonId");
+
+                    b.Navigation("PersonalInformation");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.Wallet", b =>
+                {
+                    b.HasOne("masa_backend.Models.PersonalInformation", "PersonalInformation")
+                        .WithOne("Wallet")
+                        .HasForeignKey("masa_backend.Models.Wallet", "PersonId");
+
+                    b.Navigation("PersonalInformation");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.WalletHistory", b =>
+                {
+                    b.HasOne("masa_backend.Models.Wallet", "Wallet")
+                        .WithMany("WalletHistories")
+                        .HasForeignKey("WalletId");
+
+                    b.Navigation("Wallet");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.City", b =>
+                {
+                    b.Navigation("PersonalInformation");
+                });
+
             modelBuilder.Entity("masa_backend.Models.Country", b =>
                 {
+                    b.Navigation("Citys");
+
+                    b.Navigation("PersonalInformation");
+
                     b.Navigation("Provinces");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.PersonalInformation", b =>
+                {
+                    b.Navigation("User");
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Province", b =>
                 {
-                    b.Navigation("Cities");
+                    b.Navigation("Citys");
+
+                    b.Navigation("PersonalInformation");
                 });
 
-            modelBuilder.Entity("masa_backend.Models.User", b =>
+            modelBuilder.Entity("masa_backend.Models.Wallet", b =>
                 {
-                    b.Navigation("PersonalInformation")
-                        .IsRequired();
+                    b.Navigation("WalletHistories");
                 });
 #pragma warning restore 612, 618
         }

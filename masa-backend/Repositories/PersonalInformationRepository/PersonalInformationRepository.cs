@@ -10,9 +10,10 @@ namespace masa_backend.Repositories
         public PersonalInformationRepository(MasaDbContext repositoryContext, IMapper mapper) :base(repositoryContext,mapper)
         {
         }
-        public async Task AddAsync(PersonalInformationDto personalInformation)
+        public async Task<PersonalInformationDto> AddAsync(PersonalInformationDto personalInformation)
         {
             await AddAsync(_mapper.Map<PersonalInformation>(personalInformation));
+            return _mapper.Map<PersonalInformationDto>(personalInformation);
         }
         public async Task UpdateAsync(PersonalInformationDto personalInformation)
         {
@@ -31,10 +32,16 @@ namespace masa_backend.Repositories
             return await GetByQuery()
                 .CountAsync();
         }
-        public PersonalInformationDto GetUser(Guid id)
+        public PersonalInformationDto Get(Guid id)
         {
             var result = GetByQuery()
                 .Where(current => current.Id == id);
+            return _mapper.Map<PersonalInformationDto>(result);
+        }
+        public PersonalInformationDto GetByUserId(Guid userId)
+        {
+            var result = GetByQuery()
+                .Where(current=>current.UserId == userId);
             return _mapper.Map<PersonalInformationDto>(result);
         }
     }

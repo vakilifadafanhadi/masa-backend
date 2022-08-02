@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using masa_backend;
 
@@ -11,9 +12,10 @@ using masa_backend;
 namespace masa_backend.Migrations
 {
     [DbContext(typeof(MasaDbContext))]
-    partial class MasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220801173823_init")]
+    partial class init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -201,6 +203,7 @@ namespace masa_backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("PersonId")
+                        .IsRequired()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("RemoveAt")
@@ -216,10 +219,6 @@ namespace masa_backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("PersonId")
-                        .IsUnique()
-                        .HasFilter("[PersonId] IS NOT NULL");
 
                     b.ToTable("Users");
                 });
@@ -311,6 +310,13 @@ namespace masa_backend.Migrations
                         .WithMany("PersonalInformation")
                         .HasForeignKey("CountryId");
 
+                    b.HasOne("masa_backend.Models.User", "User")
+                        .WithOne("PersonalInformation")
+                        .HasForeignKey("masa_backend.Models.PersonalInformation", "Id")
+                        .HasPrincipalKey("masa_backend.Models.User", "PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("masa_backend.Models.Province", "Province")
                         .WithMany("PersonalInformation")
                         .HasForeignKey("ProvinceId");
@@ -320,6 +326,8 @@ namespace masa_backend.Migrations
                     b.Navigation("Country");
 
                     b.Navigation("Province");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Province", b =>
@@ -329,15 +337,6 @@ namespace masa_backend.Migrations
                         .HasForeignKey("CountryId");
 
                     b.Navigation("Country");
-                });
-
-            modelBuilder.Entity("masa_backend.Models.User", b =>
-                {
-                    b.HasOne("masa_backend.Models.PersonalInformation", "PersonalInformation")
-                        .WithOne("User")
-                        .HasForeignKey("masa_backend.Models.User", "PersonId");
-
-                    b.Navigation("PersonalInformation");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Wallet", b =>
@@ -374,8 +373,6 @@ namespace masa_backend.Migrations
 
             modelBuilder.Entity("masa_backend.Models.PersonalInformation", b =>
                 {
-                    b.Navigation("User");
-
                     b.Navigation("Wallet");
                 });
 
@@ -383,6 +380,11 @@ namespace masa_backend.Migrations
                 {
                     b.Navigation("Citys");
 
+                    b.Navigation("PersonalInformation");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.User", b =>
+                {
                     b.Navigation("PersonalInformation");
                 });
 

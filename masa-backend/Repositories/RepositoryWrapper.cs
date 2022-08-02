@@ -9,6 +9,8 @@ namespace masa_backend.Repositories
         public bool IsDisposed { get; protected set; }
         private IUserRepository? _userRepository;
         private IPersonalInformationRepository? _personalInformationRepository;
+        private IWalletRepository? _walletRepository;
+        private IWalletHistoryRepository? _walletHistoryRepository;
         public RepositoryWrapper(MasaDbContext masaDbContext, IMapper mapper)
         {
             _masaDbContext = masaDbContext;
@@ -25,10 +27,23 @@ namespace masa_backend.Repositories
         {
             await _masaDbContext.SaveChangesAsync();
         }
-
         public void Save()
         {
             _masaDbContext.SaveChanges();
+        }
+        public IWalletRepository WalletRepository
+        {
+            get
+            {
+                return _walletRepository ?? new WalletRepository(_masaDbContext, _mapper);
+            }
+        }
+        public IWalletHistoryRepository WalletHistoryRepository
+        {
+            get
+            {
+                return _walletHistoryRepository ?? new WalletHistoryRepository(_masaDbContext, _mapper);
+            }
         }
         public IPersonalInformationRepository PersonalInformationRepository
         {
@@ -51,7 +66,7 @@ namespace masa_backend.Repositories
                 if (_masaDbContext != null)
                 {
                     _masaDbContext!.Dispose();
-                    _masaDbContext = null;
+                    _masaDbContext = null!;
                 }
             }
         }

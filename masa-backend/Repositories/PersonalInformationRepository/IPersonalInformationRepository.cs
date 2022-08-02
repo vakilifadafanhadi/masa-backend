@@ -4,10 +4,11 @@ namespace masa_backend.Repositories
 {
     public interface IPersonalInformationRepository
     {
-        Task AddAsync(PersonalInformationDto user);
-        Task UpdateAsync(PersonalInformationDto user);
+        Task<PersonalInformationDto> AddAsync(PersonalInformationDto person);
+        Task UpdateAsync(PersonalInformationDto person);
         Task<List<PersonalInformationDto>> GetPaginationAsync(int page, int pageSize);
         Task<int> CountAsync();
-        PersonalInformationDto GetUser(Guid id);
+        PersonalInformationDto Get(Guid id);
+        PersonalInformationDto GetByUserId(Guid userId);
     }
 }

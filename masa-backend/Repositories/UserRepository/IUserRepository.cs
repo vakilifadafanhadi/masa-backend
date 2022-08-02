@@ -9,5 +9,6 @@ namespace masa_backend.Repositories
         Task<List<UserDto>> GetPaginationAsync(int page, int pageSize);
         Task<int> CountAsync();
         UserDto GetUser(Guid id);
+        UserDto Login(LoginModelView user);
     }
 }

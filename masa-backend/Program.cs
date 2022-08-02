@@ -43,6 +43,6 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers()
              .RequireCors(MyAllowSpecificOrigins);
 });
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", () => "Masa Bank!");
 
 app.Run();
