@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using masa_backend;
 
@@ -11,9 +12,10 @@ using masa_backend;
 namespace masa_backend.Migrations
 {
     [DbContext(typeof(MasaDbContext))]
-    partial class MasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220803155358_walletHistory")]
+    partial class walletHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -54,7 +56,7 @@ namespace masa_backend.Migrations
 
                     b.HasIndex("ProvinceId");
 
-                    b.ToTable("Cities", (string)null);
+                    b.ToTable("Cities");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Country", b =>
@@ -82,7 +84,7 @@ namespace masa_backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Countries", (string)null);
+                    b.ToTable("Countries");
                 });
 
             modelBuilder.Entity("masa_backend.Models.PersonalInformation", b =>
@@ -153,7 +155,7 @@ namespace masa_backend.Migrations
 
                     b.HasIndex("ProvinceId");
 
-                    b.ToTable("PersonalInformations", (string)null);
+                    b.ToTable("PersonalInformations");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Province", b =>
@@ -183,7 +185,7 @@ namespace masa_backend.Migrations
 
                     b.HasIndex("CountryId");
 
-                    b.ToTable("Provinces", (string)null);
+                    b.ToTable("Provinces");
                 });
 
             modelBuilder.Entity("masa_backend.Models.User", b =>
@@ -221,7 +223,7 @@ namespace masa_backend.Migrations
                         .IsUnique()
                         .HasFilter("[PersonId] IS NOT NULL");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Wallet", b =>
@@ -250,7 +252,7 @@ namespace masa_backend.Migrations
                         .IsUnique()
                         .HasFilter("[PersonId] IS NOT NULL");
 
-                    b.ToTable("Wallets", (string)null);
+                    b.ToTable("Wallets");
                 });
 
             modelBuilder.Entity("masa_backend.Models.WalletHistory", b =>
@@ -283,7 +285,7 @@ namespace masa_backend.Migrations
 
                     b.HasIndex("WalletId");
 
-                    b.ToTable("WalletHistories", (string)null);
+                    b.ToTable("WalletHistories");
                 });
 
             modelBuilder.Entity("masa_backend.Models.City", b =>

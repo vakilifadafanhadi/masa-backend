@@ -5,7 +5,14 @@ namespace masa_backend.ModelViews
 {
     public class AutoMapperProfile: Profile
     {
-        public AutoMapperProfile()
+        public override string ProfileName
+        {
+            get
+            {
+                return "AutoMapper";
+            }
+        }
+        public void ConfigureMappings()
         {
             CreateMap<City, CityDto>().ReverseMap();
             CreateMap<Country, CountryDto>().ReverseMap();
@@ -14,6 +21,10 @@ namespace masa_backend.ModelViews
             CreateMap<User, UserDto>().ReverseMap();
             CreateMap<Wallet, WalletDto>().ReverseMap();
             CreateMap<WalletHistory, WalletHistoryDto>().ReverseMap();
+        }
+        public AutoMapperProfile()
+        {
+            ConfigureMappings();
         }
     }
 }

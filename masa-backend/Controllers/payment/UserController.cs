@@ -73,6 +73,7 @@ namespace masa_backend.Controllers.payment
                 responce.Add(ex);
                 return BadRequest(responce);
             }
+            finally { _repository.Dispose(); }
         }
     }
 }

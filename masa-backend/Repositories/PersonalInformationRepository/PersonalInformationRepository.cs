@@ -17,6 +17,7 @@ namespace masa_backend.Repositories
         }
         public async Task UpdateAsync(PersonalInformationDto personalInformation)
         {
+            personalInformation.UpdateAt = DateTime.Now;
             await UpdateAsync(_mapper.Map<PersonalInformation>(personalInformation));
         }
         public async Task<List<PersonalInformationDto>> GetPaginationAsync(int page, int pageSize)
@@ -35,7 +36,7 @@ namespace masa_backend.Repositories
         public PersonalInformationDto Get(Guid id)
         {
             var result = GetByQuery()
-                .Where(current => current.Id == id);
+                .Where(current => current.Id == id).FirstOrDefault();
             return _mapper.Map<PersonalInformationDto>(result);
         }
         public PersonalInformationDto GetByUserId(Guid userId)

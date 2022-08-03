@@ -95,7 +95,18 @@ namespace masa_backend
                 .WithOne(person => person.Wallet)
                 .HasForeignKey<Wallet>(wallet => wallet.PersonId)
                 .HasPrincipalKey<PersonalInformation>(person => person.Id);
+                wallet.HasMany(wallet => wallet.WalletHistories)
+                .WithOne(walletHistory => walletHistory.Wallet)
+                .HasForeignKey(walletHistory => walletHistory.WalletId)
+                .HasPrincipalKey(wallet => wallet.Id);
             });
+            //modelBuilder.Entity<WalletHistory>(walletHistory =>
+            //{
+            //    walletHistory.HasMany<Wallet>(walletHistory => walletHistory.)
+            //    .(wallet => wallet.WalletHistories)
+            //    .HasForeignKey(walletHistory => walletHistory.WalletId)
+            //    .HasPrincipalKey(wallet => wallet.Id);
+            //});
         }
     }
 }

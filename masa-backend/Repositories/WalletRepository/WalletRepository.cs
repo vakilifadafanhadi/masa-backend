@@ -16,19 +16,20 @@ namespace masa_backend.Repositories
         }
         public async Task UpdateAsync(WalletDto wallet)
         {
+            wallet.UpdateAt = DateTime.Now;
             await UpdateAsync(_mapper.Map<Wallet>(wallet));
         }
         public WalletDto Get(Guid id)
         {
             return _mapper.Map<WalletDto>(
                 GetByQuery()
-                .Where(current => current.Id == id));
+                .Where(current => current.Id == id).FirstOrDefault());
         }
         public WalletDto GetByPersonId(Guid personId)
         {
             return _mapper.Map<WalletDto>(
                 GetByQuery()
-                .Where(current=>current.PersonId==personId));
+                .Where(current=>current.PersonId==personId).FirstOrDefault());
         }
         public string GetBalance(Guid personId)
         {

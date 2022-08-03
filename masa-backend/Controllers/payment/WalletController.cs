@@ -33,55 +33,97 @@ namespace masa_backend.Controllers.payment
             {
                 responce.Data = _repository.WalletRepository.GetBalance(personId);
                 responce.Success = true;
-                return Ok(responce);// );
+                return Ok(responce);
             }
             catch (Exception ex)
             {
                 responce.Add(ex);
                 return BadRequest(responce);
+            }
+        }
+        public async Task<WalletDto> GetWallet(Guid personId)
+        {
+            try
+            {
+                WalletDto searchWallet = new();
+                var person = _repository.PersonalInformationRepository.Get(personId);
+                if (person == null)
+                    return searchWallet;
+                if (person.WalletId == Guid.Empty || person.WalletId == null)
+                {
+                    searchWallet = _repository.WalletRepository.GetByPersonId(personId);
+                    if (searchWallet == null)
+                        searchWallet = await _repository.WalletRepository.AddAsync(
+                            new WalletDto
+                            {
+                                PersonId = person.Id
+                            });
+                }
+                return searchWallet;
+            }
+            catch
+            {
                 throw;
             }
         }
-        [HttpPost, Route(template: "[action]/{personId}")]
-        public async Task<IActionResult> Deposit(DtoRequest request, [FromRoute] Guid personId)
+        [HttpGet, Route(template: "[action]/{personId}")]
+        public async Task<ActionResult<ResponceWithData<List<WalletHistoryDto>>>> GetHistoryList([FromRoute] Guid personId)
         {
-
-            var result = await _payment.Request(request, Payment.Mode.sandbox);
-            ResponceMV responce = new();
-            var person = _repository.PersonalInformationRepository.Get(personId);
-            if (person == null)
-                return NotFound(responce);
-            WalletDto searchWallet = new();
-            if (person.WalletId == Guid.Empty)
+            ResponceWithData<List<WalletHistoryDto>> responce = new();
+            try
             {
-                searchWallet = _repository.WalletRepository.GetByPersonId(personId);
-                if (searchWallet == null)
+                var person = _repository.PersonalInformationRepository.Get(personId);
+                if (person == null)
+                    return NotFound(responce);
+                if (person.WalletId == null)
                 {
-                    searchWallet = await _repository.WalletRepository.AddAsync(
-                        new WalletDto
-                        {
-                            PersonId = person.Id
-                        });
+                    var wallet = await GetWallet(personId);
+                    person.WalletId = wallet.Id;
+                    await _repository.PersonalInformationRepository.UpdateAsync(person);
                 }
-                person.WalletId = searchWallet.Id;
-                await _repository.PersonalInformationRepository.UpdateAsync(person);
+                responce.Success = true;
+                responce.Data = await _repository.WalletHistoryRepository.ListAsync(person.WalletId);
+                return Ok(responce);
             }
-            await _repository.WalletHistoryRepository.AddAsync(
-                new WalletHistoryDto
-                {
-                    Transaction = true,//send
-                    TransactionStatus = result.Status,
-                    WalletId = person.WalletId,
-                    DtoRequest = JsonSerializer.Serialize(request)
-                });
-            if (searchWallet == new WalletDto())
-                searchWallet = _repository.WalletRepository.Get((Guid)person.WalletId!);
-            if (searchWallet == null)
-                return NoContent();
-            searchWallet.Amount = (int.Parse(searchWallet.Amount) + request.Amount).ToString();
-            await _repository.WalletRepository.UpdateAsync(searchWallet);
-            await _repository.SaveAsync();
-            return Redirect($"https://sandbox.zarinpal.com/pg/StartPay/{result.Authority}");
+            catch (Exception ex)
+            {
+                responce.Add(ex);
+                return BadRequest(responce);
+            }
+        }
+        [HttpPost, Route(template: "[action]/{personId}")]
+        public async Task<ActionResult<ResponceWithData<string>>> Deposit(DtoRequest request, [FromRoute] Guid personId)
+        {
+                ResponceWithData<string> responce = new();
+            try
+            {
+                var result = await _payment.Request(request, Payment.Mode.sandbox);
+                var wallet = await GetWallet(personId);
+
+                await _repository.WalletHistoryRepository.AddAsync(
+                    new WalletHistoryDto
+                    {
+                        Transaction = true,//send
+                        TransactionStatus = result.Status,
+                        WalletId = wallet.Id,
+                        DtoRequest = JsonSerializer.Serialize(request)
+                    });
+                wallet.Amount = (int.Parse(wallet.Amount) + request.Amount).ToString();
+                await _repository.WalletRepository.UpdateAsync(wallet);
+                await _repository.SaveAsync();
+                responce.Success = true;
+                responce.Data = $"https://sandbox.zarinpal.com/pg/StartPay/{result.Authority}";
+                return Ok(responce);
+            }
+            catch (Exception ex)
+            {
+                responce.Add(ex);
+                return BadRequest(responce);
+            }
+            finally
+            {
+                _repository.Dispose();
+            }
         }
         [HttpGet, Route("[action]/{personId}")]
         public void SaveTransaction([FromRoute]Guid personId)

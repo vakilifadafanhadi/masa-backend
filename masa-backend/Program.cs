@@ -15,10 +15,14 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
         });
 });
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 builder.Services.AddDbContext<masa_backend.MasaDbContext>(
         options => options.UseSqlServer("name=ConnectionStrings:DefaultConnection"));
-
 var config = new MapperConfiguration(cfg =>
 {
     cfg.AddProfile(new AutoMapperProfile());

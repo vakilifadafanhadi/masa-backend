@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using masa_backend.Models;
 using masa_backend.ModelViews;
+using Microsoft.EntityFrameworkCore;
 
 namespace masa_backend.Repositories
 {
@@ -13,6 +14,12 @@ namespace masa_backend.Repositories
         {
             await AddAsync(_mapper.Map<WalletHistory>(walletHistory));
             return walletHistory;
+        }
+        public async Task<List<WalletHistoryDto>> ListAsync(Guid? walletId)
+        {
+            return _mapper.Map<List<WalletHistoryDto>>(await GetByQuery()
+                .Where(current => current.WalletId == walletId)
+                .ToListAsync());
         }
     }
 }
