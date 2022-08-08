@@ -71,16 +71,16 @@ namespace masa_backend.Controllers.payment
                 string text = "کاربر گرامی ماسا بانک؛ رمز ورود شما: " + request.Pass + "این رمز یک ساعت دیگر منقضی خواهد شد.";
                 string _baseUrl = "http://www.0098sms.com/sendsmslink.aspx?FROM=50002203053&TO=" + person.Mobile + "&TEXT=" + text + "&USERNAME=dsms9223&PASSWORD=54562149&DOMAIN=0098";
                 HttpClient _httpClient = new();
-                //var smsResult = await _httpClient.GetAsync(_baseUrl);
-                //var smsResponce = await smsResult.Content.ReadAsStringAsync();
-                if (true)//smsResult.IsSuccessStatusCode)
+                var smsResult = await _httpClient.GetAsync(_baseUrl);
+                var smsResponce = await smsResult.Content.ReadAsStringAsync();
+                if (smsResult.IsSuccessStatusCode)
                 {
                     responce.Success = true;
                     responce.Data = result;
                     return Ok(responce);
                 }
-                //responce.Errors.Add(smsResponce);
-                //return BadRequest(responce);
+                responce.Errors.Add(smsResponce);
+                return BadRequest(responce);
             }
             catch (Exception ex)
             {
