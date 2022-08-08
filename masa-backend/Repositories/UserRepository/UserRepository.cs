@@ -37,11 +37,20 @@ namespace masa_backend.Repositories
                 .Where(current => current.Id == id);
             return _mapper.Map<UserDto>(result);
         }
-        public UserDto Login(LoginModelView user)
+        public UserDto Login(LoginModelView model)
         {
-            var result = GetByQuery()
-                .Where(current => current.PersonalInformation.NationalCode == user.NationalCode).FirstOrDefault();
-            return _mapper.Map<UserDto>(result);
+            try
+            {
+                int.Parse(model.UserName);
+                return _mapper.Map<UserDto>(GetByQuery()
+                    .Where(current => current.PersonalInformation.NationalCode == model.UserName ||
+                    current.PersonalInformation.Mobile == model.UserName).FirstOrDefault());
+            }
+            catch (FormatException)
+            {
+                return _mapper.Map<UserDto>(GetByQuery()
+                    .Where(current => current.PersonalInformation.Email == model.UserName).FirstOrDefault());
+            }
         }
     }
 }

@@ -1,11 +1,13 @@
-﻿using Dto.Other;
-using Dto.Payment;
-using Dto.Response.Payment;
+﻿//using Dto.Other;
+//using Dto.Payment;
+//using Dto.Response.Payment;
 using masa_backend.ModelViews;
 using masa_backend.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
+//using RestSharp;
 using System.Text.Json;
-using ZarinPal.Class;
+//using ZarinPal.Class;
 
 namespace masa_backend.Controllers.payment
 {
@@ -14,16 +16,10 @@ namespace masa_backend.Controllers.payment
     public class WalletController : ControllerBase
     {
         private readonly IRepositoryWrapper _repository;
-        private readonly Payment _payment;
-        private readonly Authority _authority;
-        private readonly Transactions _transactions;
+        private static Random random = new Random();
         public WalletController(IRepositoryWrapper repository)
         {
             _repository = repository;
-            var expose = new Expose();
-            _payment = expose.CreatePayment();
-            _authority = expose.CreateAuthority();
-            _transactions = expose.CreateTransactions();
         }
         [HttpGet, Route(template: "[action]/{personId}")]
         public ActionResult<ResponceWithData<string>> Get([FromRoute]Guid personId)
@@ -45,26 +41,30 @@ namespace masa_backend.Controllers.payment
         {
             try
             {
-                WalletDto searchWallet = new();
                 var person = _repository.PersonalInformationRepository.Get(personId);
                 if (person == null)
-                    return searchWallet;
+                    return null!;
                 if (person.WalletId == Guid.Empty || person.WalletId == null)
                 {
-                    searchWallet = _repository.WalletRepository.GetByPersonId(personId);
-                    if (searchWallet == null)
-                        searchWallet = await _repository.WalletRepository.AddAsync(
+                    return _repository.WalletRepository.GetByPersonId(personId)??
+                        await _repository.WalletRepository.AddAsync(
                             new WalletDto
                             {
                                 PersonId = person.Id
                             });
                 }
-                return searchWallet;
+                return _repository.WalletRepository.Get((Guid)person.WalletId);
             }
             catch
             {
                 throw;
             }
+        }
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz~!@#$%^&*()_+`-=.,<>?/0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
         }
         [HttpGet, Route(template: "[action]/{personId}")]
         public async Task<ActionResult<ResponceWithData<List<WalletHistoryDto>>>> GetHistoryList([FromRoute] Guid personId)
@@ -91,29 +91,99 @@ namespace masa_backend.Controllers.payment
                 return BadRequest(responce);
             }
         }
-        [HttpPost, Route(template: "[action]/{personId}")]
-        public async Task<ActionResult<ResponceWithData<string>>> Deposit(DtoRequest request, [FromRoute] Guid personId)
+        
+        [HttpPost, Route(template: "[action]")]
+        public async Task<ActionResult<ResponceWithData<string>>> Deposit(ModelViews.NextPay.GenerateTokenDto request)//DtoRequest request, [FromRoute] Guid personId)
         {
-                ResponceWithData<string> responce = new();
+            ResponceWithData<string> responce = new();
             try
             {
-                var result = await _payment.Request(request, Payment.Mode.sandbox);
-                var wallet = await GetWallet(personId);
-
-                await _repository.WalletHistoryRepository.AddAsync(
-                    new WalletHistoryDto
+                var person = _repository.PersonalInformationRepository.Get(request.PersonId);
+                if (person == null)
+                    return BadRequest(NotFound());
+                string _baseUrl = "https://nextpay.org/nx/gateway/token";
+                HttpClient _httpClient = new()
+                {
+                    Timeout = new TimeSpan(0, 40, 0)
+                };
+                var orderId = RandomString(10);
+                string str = $"api_key=d0147452-022c-481e-bbc9-7f274f63e38f&amount={request.Amount}&order_id={orderId}&customer_phone={person.Mobile}&callback_uri=https://localhost:7071/wallet/transactionInquery/{request.PersonId}";
+                //"custom_json_fields": new FormControl({productName:'Shoes752' , id\":52 }),
+                var content = new StringContent(str, Encoding.UTF8, "application/x-www-form-urlencoded");
+                var bankResult = await _httpClient.PostAsync(_baseUrl, content);
+                if (bankResult.IsSuccessStatusCode)
+                {
+                    var bankResponse = await bankResult.Content.ReadAsStringAsync();
+                    var wallet = await GetWallet(request.PersonId);
+                    await _repository.WalletHistoryRepository.AddAsync(
+                            new WalletHistoryDto
+                            {
+                                Transaction = true,//send
+                                WalletId = wallet.Id,
+                                DtoRequest = bankResponse
+                            });
+                    wallet.Amount = (long.Parse(wallet.Amount) + long.Parse(request.Amount)).ToString();
+                    await _repository.WalletRepository.UpdateAsync(wallet);
+                    await _repository.SaveAsync();
+                        responce.Data = bankResponse;
+                        if (bankResponse.Contains("\"code\":-1"))
+                        {
+                            responce.Success = true;
+                            return Ok(responce);
+                        }
+                }
+                return BadRequest(responce);
+            }
+            catch (Exception ex)
+            {
+                responce.Add(ex);
+                return BadRequest(responce);
+            }
+            finally
+            {
+                _repository.Dispose();
+            }
+        }
+        [HttpPost, Route("[action]")]
+        public async Task<ActionResult<ResponceWithData<string>>> Withdraw(ModelViews.NextPay.WithdrawDto request)
+        {
+            ResponceWithData<string> responce = new();
+            try
+            {
+                var person = _repository.PersonalInformationRepository.Get(request.PersonId);
+                if (person == null)
+                    return BadRequest(NotFound());
+                string _baseUrl = "https://nextpay.org/nx/gateway/token";
+                HttpClient _httpClient = new()
+                {
+                    Timeout = new TimeSpan(0, 40, 0)
+                };
+                var orderId = RandomString(10);
+                string str = $"wid=32&auth=7207c1690e3acb95dcd3aafc1ec1ab7a14ca6b8s&amount={request.Amount}&sheba={request.Sheba}&name={person.FirstName + ' ' + person.LastName}&tracker={orderId}&currency=IRR";
+                var content = new StringContent(str, Encoding.UTF8, "application/x-www-form-urlencoded");
+                var bankResult = await _httpClient.PostAsync(_baseUrl, content);
+                if (bankResult.IsSuccessStatusCode)
+                {
+                    var bankResponse = await bankResult.Content.ReadAsStringAsync();
+                    var wallet = await GetWallet(request.PersonId);
+                    await _repository.WalletHistoryRepository.AddAsync(
+                            new WalletHistoryDto
+                            {
+                                Transaction = true,//send
+                                WalletId = wallet.Id,
+                                DtoRequest = bankResponse
+                            });
+                    wallet.Amount = (long.Parse(wallet.Amount) + long.Parse(request.Amount)).ToString();
+                    await _repository.WalletRepository.UpdateAsync(wallet);
+                    await _repository.SaveAsync();
+                    responce.Data = bankResponse;
+                    if (bankResponse.Contains("\"code\":200"))
                     {
-                        Transaction = true,//send
-                        TransactionStatus = result.Status,
-                        WalletId = wallet.Id,
-                        DtoRequest = JsonSerializer.Serialize(request)
-                    });
-                wallet.Amount = (int.Parse(wallet.Amount) + request.Amount).ToString();
-                await _repository.WalletRepository.UpdateAsync(wallet);
-                await _repository.SaveAsync();
-                responce.Success = true;
-                responce.Data = $"https://sandbox.zarinpal.com/pg/StartPay/{result.Authority}";
-                return Ok(responce);
+                        responce.Success = true;
+                        return Ok(responce);
+                    }
+                }
+                return BadRequest(responce);
             }
             catch (Exception ex)
             {
@@ -126,75 +196,9 @@ namespace masa_backend.Controllers.payment
             }
         }
         [HttpGet, Route("[action]/{personId}")]
-        public void SaveTransaction([FromRoute]Guid personId)
+        public void TransactionInquery(ModelViews.NextPay.GenerateTokenResponceDto request)
         {
             
-        }
-        /// <summary>
-        /// ﻓﺮﺍﻳﻨﺪ ﺧﺮﻳﺪ ﺑﺎ ﺗﺴﻮﻳﻪ ﺍﺷﺘﺮﺍﻛﻲ 
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IActionResult> RequestWithExtra()
-        {
-            var result = await _payment.Request(new DtoRequestWithExtra()
-            {
-                Mobile = "09121112222",
-                CallbackUrl = "https://localhost:44310/home/validate",
-                Description = "توضیحات",
-                Email = "farazmaan@outlook.com",
-                Amount = 1000000,
-                MerchantId = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-                AdditionalData = "{\"Wages\":{\"zp.1.1\":{\"Amount\":120,\"Description\":\" ﺗﻘﺴﻴﻢ \"}, \" ﺳﻮﺩ ﺗﺮﺍﻛﻨﺶ zp.2.5\":{\"Amount\":60,\"Description\":\" ﻭﺍﺭﻳﺰ \"}}} "
-            }, Payment.Mode.sandbox);
-            return Redirect($"https://sandbox.zarinpal.com/pg/StartPay/{result.Authority}");
-        }
-        /// <summary>
-        /// اعتبار سنجی خرید
-        /// </summary>
-        /// <param name="authority"></param>
-        /// <param name="status"></param>
-        /// <returns></returns>
-
-        public async Task<IActionResult> Validate(string authority, string status)
-        {
-            var verification = await _payment.Verification(new DtoVerification
-            {
-                Amount = 1000000,
-                MerchantId = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-                Authority = authority
-            }, Payment.Mode.sandbox);
-            return Ok();
-        }
-
-        /// <summary>
-        /// ﺩﺭ ﺭﻭﺵ ﺍﻳﺠﺎﺩ ﺷﻨﺎﺳﻪ ﭘﺮﺩﺍﺧﺖ ﺑﺎ ﻃﻮﻝ ﻋﻤﺮ ﺑﺎﻻ ﻣﻤﻜﻦ ﺍﺳﺖ ﺣﺎﻟﺘﻲ ﭘﻴﺶ ﺁﻳﺪ ﻛﻪ ﺷﻤﺎ ﺑﻪ ﺗﻤﺪﻳﺪ ﺑﻴﺸﺘﺮ ﻃﻮﻝ ﻋﻤﺮ ﻳﻚ ﺷﻨﺎﺳﻪ ﭘﺮﺩﺍﺧﺖ ﻧﻴﺎﺯ ﺩﺍﺷﺘﻪ ﺑﺎﺷﻴﺪ
-        /// ﺩﺭ ﺍﻳﻦ ﺻﻮﺭﺕ ﻣﻲ ﺗﻮﺍﻧﻴﺪ ﺍﺯ ﻣﺘﺪ زیر ﺍﺳﺘﻔﺎﺩﻩ ﻧﻤﺎﻳﻴﺪ 
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IActionResult> RefreshAuthority()
-        {
-            var refresh = await _authority.Refresh(new DtoRefreshAuthority
-            {
-                Authority = "",
-                ExpireIn = 1,
-                MerchantId = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            }, Payment.Mode.sandbox);
-            return Ok();
-        }
-
-        /// <summary>
-        /// ﻣﻤﻜﻦ ﺍﺳﺖ ﺷﻤﺎ ﻧﻴﺎﺯ ﺩﺍﺷﺘﻪ ﺑﺎﺷﻴﺪ ﻛﻪ ﻣﺘﻮﺟﻪ ﺷﻮﻳﺪ ﭼﻪ ﭘﺮﺩﺍﺧﺖ ﻫﺎﻱ ﺗﻮﺳﻂ ﻭﺏ ﺳﺮﻭﻳﺲ ﺷﻤﺎ ﺑﻪ ﺩﺭﺳﺘﻲ ﺍﻧﺠﺎﻡ ﺷﺪﻩ ﺍﻣﺎ ﻣﺘﺪ  ﺭﻭﻱ ﺁﻧﻬﺎ ﺍﻋﻤﺎﻝ ﻧﺸﺪﻩ
-        /// ، ﺑﻪ ﻋﺒﺎﺭﺕ ﺩﻳﮕﺮ ﺍﻳﻦ ﻣﺘﺪ ﻟﻴﺴﺖ ﭘﺮﺩﺍﺧﺖ ﻫﺎﻱ ﻣﻮﻓﻘﻲ ﻛﻪ ﺷﻤﺎ ﺁﻧﻬﺎ ﺭﺍ ﺗﺼﺪﻳﻖ ﻧﻜﺮﺩﻩ ﺍﻳﺪ ﺭﺍ ﺑﻪ PaymentVerification ﺷﻤﺎ ﻧﻤﺎﻳﺶ ﻣﻲ ﺩﻫﺪ.
-        /// </summary>
-        /// <returns></returns>
-
-        public async Task<IActionResult> Unverified()
-        {
-            var refresh = await _transactions.GetUnverified(new DtoMerchant
-            {
-                MerchantId = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            }, Payment.Mode.sandbox);
-            return Ok();
         }
     }
 }

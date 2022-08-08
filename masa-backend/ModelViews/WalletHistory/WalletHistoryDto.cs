@@ -6,7 +6,7 @@
         public Guid? WalletId { get; set; }
         public string? TransactionId { get; set; }
         public int? TransactionStatus { get; set; }
-        public WalletDto? Wallet { get; set; }
+        public List<WalletDto>? Wallets { get; set; }
         public string? DtoRequest { get; set; }
         //public WalletHistoryDto()
         //{

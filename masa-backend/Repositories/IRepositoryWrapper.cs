@@ -7,6 +7,7 @@
         IPersonalInformationRepository PersonalInformationRepository { get; }
         IWalletRepository WalletRepository { get; }
         IWalletHistoryRepository WalletHistoryRepository { get; }
+        ICountryRepository CountryRepository { get; }
         void Save();
         Task SaveAsync();
     }

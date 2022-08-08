@@ -13,7 +13,7 @@ namespace masa_backend.Repositories
         public async Task<PersonalInformationDto> AddAsync(PersonalInformationDto personalInformation)
         {
             await AddAsync(_mapper.Map<PersonalInformation>(personalInformation));
-            return _mapper.Map<PersonalInformationDto>(personalInformation);
+            return personalInformation;
         }
         public async Task UpdateAsync(PersonalInformationDto personalInformation)
         {

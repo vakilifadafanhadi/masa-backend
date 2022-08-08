@@ -4,7 +4,8 @@
     {
         public string? Amount { get; set; }
         public Guid? PersonId { get; set; }
-        public List<WalletHistory>? WalletHistories { get; set; }
+        public Guid? WalletHistoryId { get; set; }
+        public WalletHistory? WalletHistory { get; set; }
         public PersonalInformation? PersonalInformation { get; set; }
     }
 }

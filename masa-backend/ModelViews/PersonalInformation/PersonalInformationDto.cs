@@ -16,7 +16,7 @@ namespace masa_backend.ModelViews
         public string? Email { get; set; }
         public string? Address { get; set; }
         [Required]
-        [MinLength(10), MaxLength(13)]
+        [StringLength(10)]
         public string Mobile { get; set; } = default!;
         public Guid? WalletId { get; set; }
         public Guid? UserId { get; set; }

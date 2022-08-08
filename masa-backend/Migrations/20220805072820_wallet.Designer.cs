@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using masa_backend;
 
@@ -11,9 +12,10 @@ using masa_backend;
 namespace masa_backend.Migrations
 {
     [DbContext(typeof(MasaDbContext))]
-    partial class MasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220805072820_wallet")]
+    partial class wallet
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,7 +246,7 @@ namespace masa_backend.Migrations
                     b.Property<DateTime?>("UpdateAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("WalletHistoryId")
+                    b.Property<Guid?>("WalletId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -253,7 +255,7 @@ namespace masa_backend.Migrations
                         .IsUnique()
                         .HasFilter("[PersonId] IS NOT NULL");
 
-                    b.HasIndex("WalletHistoryId");
+                    b.HasIndex("WalletId");
 
                     b.ToTable("Wallets");
                 });
@@ -351,7 +353,7 @@ namespace masa_backend.Migrations
 
                     b.HasOne("masa_backend.Models.WalletHistory", "WalletHistory")
                         .WithMany("Wallets")
-                        .HasForeignKey("WalletHistoryId");
+                        .HasForeignKey("WalletId");
 
                     b.Navigation("PersonalInformation");
 
