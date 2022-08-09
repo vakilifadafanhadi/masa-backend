@@ -41,7 +41,7 @@ namespace masa_backend.Repositories
         {
             try
             {
-                int.Parse(model.UserName);
+                long.Parse(model.UserName);
                 return _mapper.Map<UserDto>(GetByQuery()
                     .Where(current => current.PersonalInformation.NationalCode == model.UserName ||
                     current.PersonalInformation.Mobile == model.UserName).FirstOrDefault());

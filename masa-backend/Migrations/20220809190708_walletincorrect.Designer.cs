@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using masa_backend;
 
@@ -11,9 +12,10 @@ using masa_backend;
 namespace masa_backend.Migrations
 {
     [DbContext(typeof(MasaDbContext))]
-    partial class MasaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220809190708_walletincorrect")]
+    partial class walletincorrect
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,11 +246,16 @@ namespace masa_backend.Migrations
                     b.Property<DateTime?>("UpdateAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("WalletHistoryId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PersonId")
                         .IsUnique()
                         .HasFilter("[PersonId] IS NOT NULL");
+
+                    b.HasIndex("WalletHistoryId");
 
                     b.ToTable("Wallets");
                 });
@@ -283,8 +290,6 @@ namespace masa_backend.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("WalletId");
 
                     b.ToTable("WalletHistories");
                 });
@@ -349,16 +354,13 @@ namespace masa_backend.Migrations
                         .WithOne("Wallet")
                         .HasForeignKey("masa_backend.Models.Wallet", "PersonId");
 
+                    b.HasOne("masa_backend.Models.WalletHistory", "WalletHistory")
+                        .WithMany("Wallets")
+                        .HasForeignKey("WalletHistoryId");
+
                     b.Navigation("PersonalInformation");
-                });
 
-            modelBuilder.Entity("masa_backend.Models.WalletHistory", b =>
-                {
-                    b.HasOne("masa_backend.Models.Wallet", "Wallet")
-                        .WithMany("WalletHistories")
-                        .HasForeignKey("WalletId");
-
-                    b.Navigation("Wallet");
+                    b.Navigation("WalletHistory");
                 });
 
             modelBuilder.Entity("masa_backend.Models.City", b =>
@@ -389,9 +391,9 @@ namespace masa_backend.Migrations
                     b.Navigation("PersonalInformation");
                 });
 
-            modelBuilder.Entity("masa_backend.Models.Wallet", b =>
+            modelBuilder.Entity("masa_backend.Models.WalletHistory", b =>
                 {
-                    b.Navigation("WalletHistories");
+                    b.Navigation("Wallets");
                 });
 #pragma warning restore 612, 618
         }

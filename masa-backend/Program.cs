@@ -40,6 +40,7 @@ using (var scope = app.Services.CreateScope())
     context.Database.Migrate();
     context.Database.EnsureCreated();
 }
+app.UseStaticFiles();
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
 app.UseEndpoints(endpoints =>

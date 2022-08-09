@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace masa_backend.Models
+﻿namespace masa_backend.Models
 {
     public class Country : BaseEntity
     {

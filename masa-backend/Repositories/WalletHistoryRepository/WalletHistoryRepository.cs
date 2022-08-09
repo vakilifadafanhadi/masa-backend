@@ -15,6 +15,18 @@ namespace masa_backend.Repositories
             await AddAsync(_mapper.Map<WalletHistory>(walletHistory));
             return walletHistory;
         }
+        public async Task<WalletHistoryDto> UpdateAsync(WalletHistoryDto walletHistory)
+        {
+            await UpdateAsync(_mapper.Map<WalletHistory>(walletHistory));
+            return walletHistory;
+        }
+        public WalletHistoryDto GetByWalletAndTransferId(Guid? walletId,string? tranferId)
+        {
+            return _mapper.Map<WalletHistoryDto>(GetByQuery()
+                .Where(current => current.WalletId == walletId)
+                .Where(current=> current.TransactionId == tranferId)
+                .FirstOrDefault());
+        }
         public async Task<List<WalletHistoryDto>> ListAsync(Guid? walletId)
         {
             return _mapper.Map<List<WalletHistoryDto>>(await GetByQuery()

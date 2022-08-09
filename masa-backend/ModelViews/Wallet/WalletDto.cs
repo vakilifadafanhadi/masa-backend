@@ -4,8 +4,7 @@
     {
         public string Amount { get; set; } = "0";
         public Guid? PersonId { get; set; }
-        public Guid? WalletHistoryId { get; set; }
-        public WalletHistoryDto? WalletHistory { get; set; }
+        public List<WalletHistoryDto>? WalletHistories { get; set; }
         public PersonalInformationDto? PersonalInformation { get; set; }
         //public WalletDto()
         //{

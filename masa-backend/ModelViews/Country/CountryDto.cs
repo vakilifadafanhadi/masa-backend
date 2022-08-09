@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace masa_backend.ModelViews
 {
@@ -7,6 +8,8 @@ namespace masa_backend.ModelViews
         [Required]
         public string Name { get; set; } = default!;
         public int? CountryCode { get; set; }
+        [StringLength(3)]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string? Continent { get; set; }
         public List<ProvinceDto>? Provinces { get; set; }
         public List<CityDto>? Cities { get; set; }

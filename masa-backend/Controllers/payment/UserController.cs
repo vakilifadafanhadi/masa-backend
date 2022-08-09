@@ -30,10 +30,15 @@ namespace masa_backend.Controllers.payment
                         Mobile = request.Mobile,
                         CountryId = country.Id
                     });
+                Random random = new();
+                string token = country.Continent + request?.Gender + request?.NationalCode;
+                string key = random.NextInt64(10000000000000, 99999999999999).ToString();
                 await _repository.UserRepository.AddAsync(
                     new UserDto
                     {
                         PersonId = person.Id,
+                        Key = key,
+                        Token = Cryptor.Encrypt(token, key),
                         UserName = request.NationalCode
                     });
                 await _repository.WalletRepository.AddAsync(
