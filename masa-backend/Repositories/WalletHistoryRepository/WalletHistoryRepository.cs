@@ -31,6 +31,7 @@ namespace masa_backend.Repositories
         {
             return _mapper.Map<List<WalletHistoryDto>>(await GetByQuery()
                 .Where(current => current.WalletId == walletId)
+                .OrderByDescending(x=>x.CreateAt)
                 .ToListAsync());
         }
     }

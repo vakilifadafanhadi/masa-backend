@@ -5,5 +5,6 @@ namespace masa_backend.Repositories
     public interface ICountryRepository
     {
         Task<CountryDto> AddAsync(CountryDto country);
+        CountryDto Get(Guid id);
     }
 }

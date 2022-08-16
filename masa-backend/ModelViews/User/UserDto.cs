@@ -4,6 +4,7 @@ namespace masa_backend.ModelViews
 {
     public class UserDto:BaseEntityDto
     {
+        public int Type { get; set; }
         public string? Token { get; set; }
         public string? UserName { get; set; } = default!;
         public string? Key { get; set; }

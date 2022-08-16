@@ -2,6 +2,7 @@
 {
     public class User:BaseEntity
     {
+        public int Type { get; set; } = 0;
         public string? Token { get; set; }
         public string? UserName { get; set; }
         public string? Key { get; set; }

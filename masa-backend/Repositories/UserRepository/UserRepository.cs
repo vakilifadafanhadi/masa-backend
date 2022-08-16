@@ -34,7 +34,7 @@ namespace masa_backend.Repositories
         public UserDto GetUser(Guid id)
         {
             var result = GetByQuery()
-                .Where(current => current.Id == id);
+                .Where(current => current.Id == id).FirstOrDefault();
             return _mapper.Map<UserDto>(result);
         }
         public UserDto Login(LoginModelView model)
@@ -44,12 +44,15 @@ namespace masa_backend.Repositories
                 long.Parse(model.UserName);
                 return _mapper.Map<UserDto>(GetByQuery()
                     .Where(current => current.PersonalInformation.NationalCode == model.UserName ||
-                    current.PersonalInformation.Mobile == model.UserName).FirstOrDefault());
+                    current.PersonalInformation.Mobile == model.UserName)
+                    .Where(current => current.Pass == model.Pass)
+                    .FirstOrDefault());
             }
             catch (FormatException)
             {
                 return _mapper.Map<UserDto>(GetByQuery()
-                    .Where(current => current.PersonalInformation.Email == model.UserName).FirstOrDefault());
+                    .Where(current => current.PersonalInformation.Email == model.UserName)
+                    .Where(current => current.Pass == model.Pass).FirstOrDefault());
             }
         }
     }

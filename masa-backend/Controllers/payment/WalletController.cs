@@ -2,6 +2,7 @@
 using masa_backend.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
+using System.Text.Json;
 
 namespace masa_backend.Controllers.payment
 {
@@ -91,18 +92,18 @@ namespace masa_backend.Controllers.payment
         public async Task<ActionResult<ResponceWithData<string>>> Deposit(ModelViews.NextPay.GenerateTokenDto request)//DtoRequest request, [FromRoute] Guid personId)
         {
             ResponceWithData<string> responce = new();
+            HttpClient _httpClient = new()
+            {
+                Timeout = new TimeSpan(0, 40, 0)
+            };
             try
             {
                 var person = _repository.PersonalInformationRepository.Get(request.PersonId);
                 if (person == null)
                     return BadRequest(NotFound());
                 string _baseUrl = "https://nextpay.org/nx/gateway/token";
-                HttpClient _httpClient = new()
-                {
-                    Timeout = new TimeSpan(0, 40, 0)
-                };
                 var orderId = RandomString(10);
-                string str = $"api_key=20219a10-e7f8-4a25-b38c-01fdd5ebdb42&amount={request.Amount}&order_id={orderId}&customer_phone={person.Mobile}&callback_uri=https://localhost:7071/wallet/DepositCallBack/{request.PersonId}";
+                string str = $"api_key=20219a10-e7f8-4a25-b38c-01fdd5ebdb42&amount={request.Amount}&order_id={orderId}&customer_phone={person.Mobile}&callback_uri=https://masabank.bitmandotbotfother.ir/pay-res/{request.PersonId}";
                 //"custom_json_fields": new FormControl({productName:'Shoes752' , id\":52 }),
                 var content = new StringContent(str, Encoding.UTF8, "application/x-www-form-urlencoded");
                 var bankResult = await _httpClient.PostAsync(_baseUrl, content);
@@ -111,22 +112,25 @@ namespace masa_backend.Controllers.payment
                     var bankResponse = await bankResult.Content.ReadAsStringAsync();
                     var wallet = await GetWallet(request.PersonId);
                     await _repository.WalletHistoryRepository.AddAsync(
-                            new WalletHistoryDto
-                            {
-                                Transaction = true,//send
-                                TransactionId = orderId,
-                                TransactionStatus = "0",
-                                WalletId = wallet.Id,
-                                DtoRequest = bankResponse
-                            });
-                    await _repository.SaveAsync();
-                        responce.Data = bankResponse;
-                        if (bankResponse.Contains("\"code\":-1"))
+                        new WalletHistoryDto
                         {
-                            responce.Success = true;
-                            return Ok(responce);
-                        }
+                            Transaction = true,//send
+                            TransactionId = orderId,
+                            TransactionStatus = "0",
+                            WalletId = wallet.Id,
+                            DtoRequest = bankResponse
+                        });
+                    responce.Data = bankResponse;
+                    var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var r = JsonSerializer.Deserialize<ModelViews.NextPay.GenerateTokenResponceDto>(bankResponse,jsonOptions);
+                    await _repository.SaveAsync();
+                    if (r.Code == -1)
+                    {
+                        responce.Success = true;
+                        return Ok(responce);
+                    }
                 }
+                responce.Warnings.Add("بانک پاسخگو نبود");
                 return BadRequest(responce);
             }
             catch (Exception ex)
@@ -136,6 +140,7 @@ namespace masa_backend.Controllers.payment
             }
             finally
             {
+                _httpClient.Dispose();
                 _repository.Dispose();
             }
         }
@@ -143,41 +148,52 @@ namespace masa_backend.Controllers.payment
         public async Task<ActionResult<ResponceWithData<string>>> Withdraw(ModelViews.NextPay.WithdrawDto request)
         {
             ResponceWithData<string> responce = new();
+            HttpClient _httpClient = new()
+            {
+                Timeout = new TimeSpan(0, 40, 0)
+            };
             try
             {
                 var person = _repository.PersonalInformationRepository.Get(request.PersonId);
                 if (person == null)
                     return BadRequest(NotFound());
-                string _baseUrl = "https://nextpay.org/nx/gateway/token";
-                HttpClient _httpClient = new()
+                var wallet = await GetWallet(request.PersonId);
+                if (long.Parse(wallet.Amount) < long.Parse(request.Amount))
                 {
-                    Timeout = new TimeSpan(0, 40, 0)
-                };
+                    responce.Errors.Add("مبلغ درخواستی شما از موجودی حساب تان بیشتر است");
+                    return BadRequest(responce);
+                }
+                //string _baseUrl = "https://nextpay.org/nx/gateway/checkout_on_time";
+                string _baseUrl = "https://nextpay.org/nx/gateway/checkout";
                 var orderId = RandomString(10);
-                string str = $"wid=32&auth=7207c1690e3acb95dcd3aafc1ec1ab7a14ca6b8s&amount={request.Amount}&sheba={request.Sheba}&name={person.FirstName + ' ' + person.LastName}&tracker={orderId}&currency=IRR";
+                //string type = "sheba";
+                //string str = $"wid=14893&auth=b9789095916f8b436522247b6d73f76bc8f26f22&amount={request.Amount}&type={type}&sheba={request.Sheba}&name={person.FirstName + ' ' + person.LastName}&tracker={orderId}";
+                string str = $"wid=14893&auth=b9789095916f8b436522247b6d73f76bc8f26f22&amount={request.Amount}&sheba={request.Sheba}&name={person.FirstName + ' ' + person.LastName}&tracker={orderId}";
                 var content = new StringContent(str, Encoding.UTF8, "application/x-www-form-urlencoded");
                 var bankResult = await _httpClient.PostAsync(_baseUrl, content);
                 if (bankResult.IsSuccessStatusCode)
                 {
                     var bankResponse = await bankResult.Content.ReadAsStringAsync();
-                    var wallet = await GetWallet(request.PersonId);
+                    var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var r = JsonSerializer.Deserialize<ModelViews.NextPay.WithdrawResponceDto>(bankResponse,jsonOptions);
                     await _repository.WalletHistoryRepository.AddAsync(
                             new WalletHistoryDto
                             {
-                                Transaction = true,//send
+                                Transaction = false,//send
                                 TransactionId = orderId,
+                                TransactionStatus = r.Code==200?"0":r.Message,
                                 WalletId = wallet.Id,
                                 DtoRequest = bankResponse
                             });
-                    wallet.Amount = (long.Parse(wallet.Amount) + long.Parse(request.Amount)).ToString();
-                    await _repository.WalletRepository.UpdateAsync(wallet);
+                    if (r.Code == 200)
+                    {
+                        wallet.Amount = (long.Parse(wallet.Amount) - long.Parse(request.Amount)).ToString();
+                        await _repository.WalletRepository.UpdateAsync(wallet);
+                        responce.Success = true;
+                    }
                     await _repository.SaveAsync();
                     responce.Data = bankResponse;
-                    if (bankResponse.Contains("\"code\":200"))
-                    {
-                        responce.Success = true;
-                        return Ok(responce);
-                    }
+                    return Ok(responce);
                 }
                 return BadRequest(responce);
             }
@@ -188,85 +204,76 @@ namespace masa_backend.Controllers.payment
             }
             finally
             {
+                _httpClient.Dispose();
                 _repository.Dispose();
             }
         }
-        [HttpGet, Route(template: "[action]/{personId}")]
-        public async Task<ContentResult> DepositCallBack([FromRoute] Guid personId, [FromQuery] Guid trans_id, [FromQuery] string order_id, [FromQuery] int amount, [FromQuery] string np_status)
+        [HttpGet, Route(template: "[action]/{personId}/{trans_id}/{order_id}/{amount}/{np_status}")]
+        public async Task<ActionResult<ResponceMV>> DepositCallBack([FromRoute] Guid personId, [FromRoute] string trans_id, [FromRoute] string order_id, [FromRoute] long amount, [FromRoute] string np_status)
         {
+            ResponceMV responce = new();
             try
             {
                 var person = _repository.PersonalInformationRepository.Get(personId);
                 if (person == null)
-                    return new ContentResult
-                    {
-                        Content = "خطا: لطفا مجدد تلاش کنید.",
-                        ContentType = "text/html"
-                    };
+                {
+                    responce.Errors.Add("خطا: کاربر یافت نشد");
+                    return BadRequest(responce);
+                }
                 var wallet = await GetWallet(personId);
                 var walletHistory = _repository.WalletHistoryRepository.GetByWalletAndTransferId(wallet.Id, order_id);
                 if (walletHistory == null)
-                    return new ContentResult
-                    {
-                        Content = "خطا: لطفا مجدد تلاش کنید.",
-                        ContentType = "text/html"
-                    };
-                if (walletHistory.DtoRequest.Contains(trans_id.ToString()) &&
-                    walletHistory.DtoRequest.Contains(amount.ToString()))
+                {
+                    responce.Errors.Add("خطا: مشکلی پیش آمد");
+                    return BadRequest(responce);
+                }
+                var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var dtoreq = JsonSerializer.Deserialize<ModelViews.NextPay.GenerateTokenResponceDto>(walletHistory?.DtoRequest, jsonOptions);
+                if (dtoreq.Trans_id == trans_id &&
+                    long.Parse(dtoreq?.Amount) == amount)
                 {
                     walletHistory.TransactionStatus = np_status;
-                    await _repository.WalletHistoryRepository.UpdateAsync(walletHistory);
+                    //await _repository.WalletHistoryRepository.UpdateAsync(walletHistory);
                 }
                 if (np_status == "Unsuccessful")
-                    return new ContentResult
-                    {
-                        Content = np_status,
-                        ContentType = "text/html"
-                    };
+                {
+                    responce.Errors.Add("عملیات ناموفق بود");
+                    return Ok();
+                }
                 string _baseUrl = "https://nextpay.org/nx/gateway/verify";
                 HttpClient _httpClient = new()
                 {
                     Timeout = new TimeSpan(0, 40, 0)
                 };
                 var orderId = RandomString(10);
-                string str = $"api_key=20219a10-e7f8-4a25-b38c-01fdd5ebdb42&trans_id={trans_id}&amount={amount}&currency=IRR";
+                string str = $"api_key=20219a10-e7f8-4a25-b38c-01fdd5ebdb42&trans_id={trans_id}&amount={amount}";
                 var content = new StringContent(str, Encoding.UTF8, "application/x-www-form-urlencoded");
                 var bankResult = await _httpClient.PostAsync(_baseUrl, content);
+
                 if (bankResult.IsSuccessStatusCode)
                 {
                     var bankResponse = await bankResult.Content.ReadAsStringAsync();
-                    if (bankResponse.Contains("\"code\":0"))
+                    var r = JsonSerializer.Deserialize<ModelViews.NextPay.VerifyTransactionResponceDto>(bankResponse, jsonOptions);
+                    if (r.Code == 0)
                     {
-                        walletHistory.TransactionStatus = "successful";
+                        walletHistory.TransactionStatus = r.Code.ToString();
                         walletHistory.DtoRequest = bankResponse;
                         await _repository.WalletHistoryRepository.UpdateAsync(walletHistory);
                         long sum = long.Parse(wallet.Amount) + amount;
                         wallet.Amount = sum.ToString();
                         await _repository.WalletRepository.UpdateAsync(wallet);
-                        return new ContentResult
-                        {
-                            Content = "تراکنش موفقیت آمیز بود. شماره سفارش شما: "+orderId+"شماره پیگیری:"+trans_id,
-                            ContentType = "text/html"
-                        };
+                        await _repository.SaveAsync();
+                        return Ok();
                     }
                 }
-                return new ContentResult
-                {
-                    Content = "تراکنش شما موفقیت آمیز نبود. در صورت کسر از حساب، تا 72 ساعت بعد به حساب شما بازگشت می خورد. با تشکر",
-                    ContentType = "text/html"
-                };
+                return Ok();
             }
-            catch (Exception ex)
+            catch
             {
-                return new ContentResult
-                {
-                    Content = "خطایی رخ داد.",
-                    ContentType = "text/html"
-                };
+                return Ok();
             }
             finally
             {
-                await _repository.SaveAsync();
                 _repository.Dispose();
             }
         }

@@ -19,5 +19,10 @@ namespace masa_backend.Repositories
             }
             return oldCountry;
         }
+        public CountryDto Get(Guid id)
+        {
+            return _mapper.Map<CountryDto>(GetByQuery()
+                .Where(current => current.Id == id).FirstOrDefault());
+        }
     }
 }

@@ -42,7 +42,7 @@ namespace masa_backend.Repositories
         public PersonalInformationDto GetByUserId(Guid userId)
         {
             var result = GetByQuery()
-                .Where(current=>current.UserId == userId);
+                .Where(current=>current.UserId == userId).FirstOrDefault();
             return _mapper.Map<PersonalInformationDto>(result);
         }
     }
