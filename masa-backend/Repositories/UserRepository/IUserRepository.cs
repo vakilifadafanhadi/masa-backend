@@ -10,5 +10,7 @@ namespace masa_backend.Repositories
         Task<int> CountAsync();
         UserDto GetUser(Guid id);
         UserDto Login(LoginModelView user);
+        UserDto GetByToken(string token);
+        UserDto GetByPersonId(Guid personId);
     }
 }

@@ -28,6 +28,7 @@ namespace masa_backend.Controllers.payment
                         LastName = request.LastName,
                         NationalCode = request.NationalCode,
                         Mobile = request.Mobile,
+                        Gender = request.Gender,
                         CountryId = country.Id
                     });
                 Random random = new();
@@ -39,7 +40,8 @@ namespace masa_backend.Controllers.payment
                         PersonId = person.Id,
                         Key = key,
                         Token = Cryptor.Encrypt(token, key),
-                        UserName = request.NationalCode
+                        UserName = request.NationalCode,
+                        Pass = request.Pass
                     });
                 await _repository.WalletRepository.AddAsync(
                     new WalletDto
@@ -81,6 +83,7 @@ namespace masa_backend.Controllers.payment
                     PersonId = result.PersonalInformation.Id,
                     Token = result?.Token,
                     UserId = result.Id,
+                    Type = result.Type
                 };
                 return Ok(responce);
             }
@@ -183,6 +186,27 @@ namespace masa_backend.Controllers.payment
             {
                 responce.Add(ex);
                 return BadRequest(responce);
+            }
+            finally
+            {
+                _repository.Dispose();
+            }
+        }
+        [HttpPost, Route(template:"[action]")]
+        public ActionResult<ResponceWithData<PersonalInformationDto>> GetPersonalInfoByUserToken(TokenGetter request) 
+        {
+            var result = new ResponceWithData<PersonalInformationDto>();
+            try
+            {
+                var user = _repository.UserRepository.GetByToken(request.Token);
+                var person = _repository.PersonalInformationRepository.Get(user.PersonId);
+                result.Data = person;
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                result.Add(ex);
+                return BadRequest(result);
             }
             finally
             {

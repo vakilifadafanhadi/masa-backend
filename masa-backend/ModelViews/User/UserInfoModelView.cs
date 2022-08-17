@@ -8,5 +8,6 @@
         public Guid WalletId { get; set; }
         public Guid PersonId { get; set; }
         public Guid UserId { get; set; }
+        public int Type { get; set; } = 0;
     }
 }

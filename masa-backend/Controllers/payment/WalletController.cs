@@ -32,6 +32,10 @@ namespace masa_backend.Controllers.payment
                 responce.Add(ex);
                 return BadRequest(responce);
             }
+            finally
+            {
+                _repository.Dispose();
+            }
         }
         public async Task<WalletDto> GetWallet(Guid personId)
         {
@@ -85,6 +89,10 @@ namespace masa_backend.Controllers.payment
             {
                 responce.Add(ex);
                 return BadRequest(responce);
+            }
+            finally
+            {
+                _repository.Dispose();
             }
         }
         
@@ -208,6 +216,76 @@ namespace masa_backend.Controllers.payment
                 _repository.Dispose();
             }
         }
+        [HttpPost, Route(template:"[action]/{fromId}/{toId}")]
+        public async Task<ActionResult<ResponceMV>> Transfer([FromBody] TransferRequestModelView request, [FromRoute]Guid fromId, [FromRoute]Guid toId)
+        {
+            ResponceMV responce = new();
+            try
+            {
+                if (request.Amount>50000)
+                {
+                    var person = _repository.PersonalInformationRepository.Get(fromId);
+                    var user = _repository.UserRepository.GetByPersonId(person.Id);
+                    if(request.Pass!=user.Pass)
+                    {
+                        responce.Errors.Add("رمز نادرست");
+                        return BadRequest(responce);
+                    }
+                }
+                var fromWallet = _repository.WalletRepository.GetByPersonId(fromId);
+                if (fromWallet == null)
+                {
+                    responce.Errors.Add("مشکلی پیش آمد");
+                    return BadRequest(responce);
+                }
+                if (int.Parse(fromWallet.Amount) < request.Amount)
+                {
+                    responce.Errors.Add("موجودی کافی نیست");
+                    return BadRequest(responce);
+                }
+                var toWallet = _repository.WalletRepository.GetByPersonId(toId);
+                if (fromWallet == null)
+                {
+                    responce.Errors.Add("مشکلی پیش آمد");
+                    return BadRequest(responce);
+                }
+                fromWallet.Amount = (int.Parse(fromWallet.Amount) - request.Amount).ToString();
+                await _repository.WalletRepository.UpdateAsync(fromWallet);
+                string orderId = RandomString(10);
+                await _repository.WalletHistoryRepository.AddAsync(
+                    new WalletHistoryDto
+                    {
+                        DtoRequest = "{\"code\":0,\"amount\":\"" + request.Amount + "\",\"order_id\":\"" + orderId + "\",\"card_holder\":\"خرید خدمات\"}",
+                        Transaction = false,
+                        TransactionId = orderId,
+                        TransactionStatus = "200",
+                        WalletId = fromWallet.Id
+                    });
+                toWallet.Amount = (int.Parse(toWallet.Amount) + request.Amount).ToString();
+                await _repository.WalletRepository.UpdateAsync(toWallet);
+                await _repository.WalletHistoryRepository.AddAsync(
+                    new WalletHistoryDto
+                    {
+                        DtoRequest = "{\"code\":0,\"amount\":\"" + request.Amount + "\",\"order_id\":\"" + orderId + "\",\"card_holder\":\"فروش خدمات\"}",
+                        Transaction = true,
+                        TransactionId = orderId,
+                        TransactionStatus = "0",
+                        WalletId = toWallet.Id
+                    });
+                await _repository.SaveAsync();
+                responce.Success = true;
+                return Ok(responce);
+            }
+            catch (Exception ex)
+            {
+                responce.Add(ex);
+                return BadRequest(responce);
+            }
+            finally
+            {
+                _repository.Dispose();
+            }
+        }
         [HttpGet, Route(template: "[action]/{personId}/{trans_id}/{order_id}/{amount}/{np_status}")]
         public async Task<ActionResult<ResponceMV>> DepositCallBack([FromRoute] Guid personId, [FromRoute] string trans_id, [FromRoute] string order_id, [FromRoute] long amount, [FromRoute] string np_status)
         {
@@ -263,14 +341,17 @@ namespace masa_backend.Controllers.payment
                         wallet.Amount = sum.ToString();
                         await _repository.WalletRepository.UpdateAsync(wallet);
                         await _repository.SaveAsync();
-                        return Ok();
+                        responce.Success = true;
+                        return Ok(responce);
                     }
                 }
-                return Ok();
+                responce.Success = true;
+                return Ok(responce);
             }
             catch
             {
-                return Ok();
+                responce.Success = true;
+                return Ok(responce);
             }
             finally
             {

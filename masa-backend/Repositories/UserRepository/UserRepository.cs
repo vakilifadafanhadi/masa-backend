@@ -37,6 +37,14 @@ namespace masa_backend.Repositories
                 .Where(current => current.Id == id).FirstOrDefault();
             return _mapper.Map<UserDto>(result);
         }
+        public UserDto GetByPersonId(Guid personId)
+        {
+            return _mapper.Map<UserDto>(
+                GetByQuery()
+                .Where(current => current.PersonId == personId)
+                .FirstOrDefault()
+                );
+        }
         public UserDto Login(LoginModelView model)
         {
             try
@@ -54,6 +62,13 @@ namespace masa_backend.Repositories
                     .Where(current => current.PersonalInformation.Email == model.UserName)
                     .Where(current => current.Pass == model.Pass).FirstOrDefault());
             }
+        }
+        public UserDto GetByToken(string token)
+        {
+            return _mapper.Map<UserDto>(
+                GetByQuery()
+                .Where(current => current.Token == token)
+                .FirstOrDefault());
         }
     }
 }
