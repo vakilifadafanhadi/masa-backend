@@ -6,6 +6,7 @@ namespace masa_backend.Repositories
     {
         Task<WalletHistoryDto> AddAsync(WalletHistoryDto walletHistory);
         Task<List<WalletHistoryDto>> ListAsync(Guid? walletId);
+        Task<List<WalletHistoryDto>> ListAsync();
         Task<WalletHistoryDto> UpdateAsync(WalletHistoryDto walletHistory);
         WalletHistoryDto GetByWalletAndTransferId(Guid? walletId, string? tranferId);
     }

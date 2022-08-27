@@ -47,21 +47,11 @@ namespace masa_backend.Repositories
         }
         public UserDto Login(LoginModelView model)
         {
-            try
-            {
-                long.Parse(model.UserName);
-                return _mapper.Map<UserDto>(GetByQuery()
-                    .Where(current => current.PersonalInformation.NationalCode == model.UserName ||
-                    current.PersonalInformation.Mobile == model.UserName)
-                    .Where(current => current.Pass == model.Pass)
-                    .FirstOrDefault());
-            }
-            catch (FormatException)
-            {
-                return _mapper.Map<UserDto>(GetByQuery()
-                    .Where(current => current.PersonalInformation.Email == model.UserName)
-                    .Where(current => current.Pass == model.Pass).FirstOrDefault());
-            }
+            return _mapper.Map<UserDto>(
+                GetByQuery()
+                .Where(current => current.PersonalInformation.PersonalIdentity == model.PersonalIdentity)
+                .Where(current => current.Pass == model.Pass)
+                .FirstOrDefault());
         }
         public UserDto GetByToken(string token)
         {
@@ -69,6 +59,36 @@ namespace masa_backend.Repositories
                 GetByQuery()
                 .Where(current => current.Token == token)
                 .FirstOrDefault());
+        }
+        public async Task<List<UserDto>> GetAllAsync()
+        {
+            var userList = await GetByQuery()
+                .OrderBy(current=>current.CreateAt)
+                .Select(current => new UserDto
+                {
+                    CreateAt = (DateTime)current.CreateAt!,
+                    Pass = current.Pass,
+                    PersonalInformation = _mapper.Map<PersonalInformationDto>(current.PersonalInformation),
+                    PersonId = (Guid)current.PersonId!,
+                    Token = current.Token,
+                    RemoveAt = current.RemoveAt,
+                    Type = current.Type,
+                    UpdateAt = current.UpdateAt,
+                    UserName = current.UserName
+                })
+                .ToListAsync();
+            return _mapper.Map<List<UserDto>>(userList);
+        }
+        public UserDto GetByPersonalityId(string personalityId) 
+        {
+            return _mapper.Map<UserDto>(GetByQuery()
+                .Where(current => current.Token == personalityId)
+                .FirstOrDefault());
+        }
+        public int Count()
+        {
+            return GetByQuery()
+                .Count();
         }
     }
 }

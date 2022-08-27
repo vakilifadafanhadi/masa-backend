@@ -5,6 +5,7 @@
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Token { get; set; }
+        public string PersonalIdentity { get; set; }
         public Guid WalletId { get; set; }
         public Guid PersonId { get; set; }
         public Guid UserId { get; set; }

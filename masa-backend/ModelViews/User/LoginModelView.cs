@@ -5,7 +5,7 @@ namespace masa_backend.ModelViews
     public class LoginModelView
     {
         [Required]
-        public string UserName { get; set; } = default!;
+        public string PersonalIdentity { get; set; } = default!;
         [Required]
         public string Pass { get; set; } = default!;
     }

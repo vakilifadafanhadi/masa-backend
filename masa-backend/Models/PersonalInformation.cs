@@ -3,6 +3,7 @@
     public class PersonalInformation : BaseEntity
     {
         public string? NationalCode { get; set; }
+        public string? PersonalIdentity { get; set; }
         public string? FatherFirstName { get; set; }
         public string? FatherLastName { get; set; }
         public DateTime? BirthDate { get; set; }

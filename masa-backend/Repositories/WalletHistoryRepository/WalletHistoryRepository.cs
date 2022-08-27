@@ -34,5 +34,11 @@ namespace masa_backend.Repositories
                 .OrderByDescending(x=>x.CreateAt)
                 .ToListAsync());
         }
+        public async Task<List<WalletHistoryDto>> ListAsync()
+        {
+            return _mapper.Map<List<WalletHistoryDto>>(await GetByQuery()
+                .OrderByDescending(x => x.CreateAt)
+                .ToListAsync());
+        }
     }
 }

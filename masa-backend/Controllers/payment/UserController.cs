@@ -15,33 +15,34 @@ namespace masa_backend.Controllers.payment
             _repository = repository;
         }
         [HttpPost, Route(template: "[action]")]
-        public async Task<ActionResult<ResponceMV>> Register(RegisterModelView request)
+        public async Task<ActionResult<ResponceWithData<string>>> Register(RegisterModelView request)
         {
-            ResponceMV responce = new();
+            ResponceWithData<string> responce = new();
             try
             {
                 var country = await _repository.CountryRepository.AddAsync(request?.Country);
+                string token = country.Continent + request?.Gender + request?.NationalCode;
                 var person = await _repository.PersonalInformationRepository.AddAsync(
                     new PersonalInformationDto
                     {
-                        FirstName = request.FirstName,
-                        LastName = request.LastName,
-                        NationalCode = request.NationalCode,
-                        Mobile = request.Mobile,
-                        Gender = request.Gender,
-                        CountryId = country.Id
+                        FirstName = request?.FirstName,
+                        LastName = request?.LastName,
+                        NationalCode = request?.NationalCode,
+                        Mobile = request?.Mobile,
+                        Gender = request?.Gender,
+                        CountryId = country.Id,
+                        PersonalIdentity = token
                     });
                 Random random = new();
-                string token = country.Continent + request?.Gender + request?.NationalCode;
                 string key = random.NextInt64(10000000000000, 99999999999999).ToString();
                 await _repository.UserRepository.AddAsync(
                     new UserDto
                     {
                         PersonId = person.Id,
                         Key = key,
-                        Token = Cryptor.Encrypt(token, key),
-                        UserName = request.NationalCode,
-                        Pass = request.Pass
+                        Token = Cryptor.Encrypt(token+"00", key),
+                        UserName = request?.NationalCode,
+                        Pass = request?.Pass
                     });
                 await _repository.WalletRepository.AddAsync(
                     new WalletDto
@@ -49,6 +50,11 @@ namespace masa_backend.Controllers.payment
                         PersonId = person.Id
                     });
                 await _repository.SaveAsync();
+                string text = $"{person?.FirstName} {person?.LastName} عزیز؛ شناسه شما:\n{token}\nماسا بانک";
+                string _baseUrl = $"http://www.0098sms.com/sendsmslink.aspx?FROM=50002203053&TO=0{person?.Mobile}&TEXT={text}&USERNAME=dsms9223&PASSWORD=54562149&DOMAIN=0098";
+                HttpClient _httpClient = new();
+                var smsResult = await _httpClient.GetAsync(_baseUrl);
+                responce.Data = token;
                 responce.Success = true;
                 return Ok(responce);
             }
@@ -78,9 +84,10 @@ namespace masa_backend.Controllers.payment
                 responce.Success = true;
                 responce.Data = new UserInfoModelView
                 {
-                    FirstName = result?.PersonalInformation?.FirstName,
+                    FirstName = result?.PersonalInformation?.FirstName!,
                     LastName = result?.PersonalInformation?.LastName,
                     PersonId = result.PersonalInformation.Id,
+                    PersonalIdentity = result.PersonalInformation.PersonalIdentity,
                     Token = result?.Token,
                     UserId = result.Id,
                     Type = result.Type
@@ -170,13 +177,14 @@ namespace masa_backend.Controllers.payment
             }
         }
         [HttpPost, Route(template:"[action]/{userId}")]
-        public async Task<ActionResult<ResponceMV>> BusinessAccountRequest([FromRoute]Guid userId)
+        public async Task<ActionResult<ResponceMV>> BusinessAccountRequest([FromRoute]Guid userId, [FromBody]string file)
         {
             var responce = new ResponceMV();
             try
             {
                 var user = _repository.UserRepository.GetUser(userId);
-                user.Type = 1;
+                user.Type = 10;
+                user.Files = file;
                 await _repository.UserRepository.UpdateAsync(user);
                 await _repository.SaveAsync();
                 responce.Success = true;
@@ -192,6 +200,7 @@ namespace masa_backend.Controllers.payment
                 _repository.Dispose();
             }
         }
+        
         [HttpPost, Route(template:"[action]")]
         public ActionResult<ResponceWithData<PersonalInformationDto>> GetPersonalInfoByUserToken(TokenGetter request) 
         {

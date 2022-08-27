@@ -7,6 +7,7 @@ namespace masa_backend.ModelViews
         [Required]
         [StringLength(10)]
         public string NationalCode { get; set; } = default!;
+        public string PersonalIdentity { get; set; } = default!;
         public string? FatherFirstName { get; set; }
         public string? FatherLastName { get; set; }
         public DateTime? BirthDate { get; set; }

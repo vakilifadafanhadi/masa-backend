@@ -12,5 +12,8 @@ namespace masa_backend.Repositories
         UserDto Login(LoginModelView user);
         UserDto GetByToken(string token);
         UserDto GetByPersonId(Guid personId);
+        UserDto GetByPersonalityId(string personalityId);
+        Task<List<UserDto>> GetAllAsync();
+        int Count();
     }
 }

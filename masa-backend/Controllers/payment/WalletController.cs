@@ -216,6 +216,12 @@ namespace masa_backend.Controllers.payment
                 _repository.Dispose();
             }
         }
+        [HttpPost, Route(template:"[action]/{fromId}/{toPersonalityId}")]
+        public async Task<ActionResult<ResponceMV>> Transfer([FromBody] TransferRequestModelView request, [FromRoute] Guid fromId, [FromRoute] string toPersonalityId)
+        {
+            var toId = _repository.UserRepository.GetByPersonalityId(toPersonalityId).PersonId;
+            return Ok(await Transfer(request, fromId, toId));
+        }
         [HttpPost, Route(template:"[action]/{fromId}/{toId}")]
         public async Task<ActionResult<ResponceMV>> Transfer([FromBody] TransferRequestModelView request, [FromRoute]Guid fromId, [FromRoute]Guid toId)
         {
@@ -327,7 +333,6 @@ namespace masa_backend.Controllers.payment
                 string str = $"api_key=20219a10-e7f8-4a25-b38c-01fdd5ebdb42&trans_id={trans_id}&amount={amount}";
                 var content = new StringContent(str, Encoding.UTF8, "application/x-www-form-urlencoded");
                 var bankResult = await _httpClient.PostAsync(_baseUrl, content);
-
                 if (bankResult.IsSuccessStatusCode)
                 {
                     var bankResponse = await bankResult.Content.ReadAsStringAsync();
@@ -357,11 +362,6 @@ namespace masa_backend.Controllers.payment
             {
                 _repository.Dispose();
             }
-        }
-        [HttpGet, Route("[action]/{personId}")]
-        public void TransactionInquery(ModelViews.NextPay.GenerateTokenResponceDto request)
-        {
-            
         }
     }
 }

@@ -19,6 +19,7 @@ namespace masa_backend.ModelViews
             CreateMap<PersonalInformation, PersonalInformationDto>().ReverseMap();
             CreateMap<Province, ProvinceDto>().ReverseMap();
             CreateMap<User, UserDto>().ReverseMap();
+            //CreateMap<List<User>, List<UserDto>>().ReverseMap();
             CreateMap<Wallet, WalletDto>().ReverseMap();
             CreateMap<WalletHistory, WalletHistoryDto>().ReverseMap();
         }
