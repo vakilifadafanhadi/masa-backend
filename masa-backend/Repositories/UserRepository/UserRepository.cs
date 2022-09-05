@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using masa_backend.Models;
 using masa_backend.ModelViews;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace masa_backend.Repositories
 {
@@ -18,12 +20,29 @@ namespace masa_backend.Repositories
         {
             await UpdateAsync(_mapper.Map<User>(user));
         }
-        public async Task<List<UserDto>> GetPaginationAsync(int page, int pageSize)
+        public async Task<List<UserDto>> GetPaginationAsync(int page, int pageSize, int? userType)
         {
-            return await GetByQuery()
-                .Select(current => _mapper.Map<UserDto>(current))
+            var query = GetByQuery()
+                .Select(current => new UserDto
+                {
+                    Id = (Guid)current.Id!,
+                    CreateAt = (DateTime)current.CreateAt!,
+                    Pass = current.Pass,
+                    PersonalInformation = _mapper.Map<PersonalInformationDto>(current.PersonalInformation),
+                    PersonId = (Guid)current.PersonId!,
+                    Token = current.Token,
+                    RemoveAt = current.RemoveAt,
+                    Type = current.Type,
+                    UpdateAt = current.UpdateAt,
+                    UserName = current.UserName,
+                    Files = current.Files
+                });
+            if(userType!=null)
+                query = query.Where(x => x.Type==userType);
+            return await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .OrderByDescending(current=>current.CreateAt)
                 .ToListAsync();
         }
         public async Task<int> CountAsync()
@@ -66,6 +85,7 @@ namespace masa_backend.Repositories
                 .OrderBy(current=>current.CreateAt)
                 .Select(current => new UserDto
                 {
+                    Id = (Guid)current.Id!,
                     CreateAt = (DateTime)current.CreateAt!,
                     Pass = current.Pass,
                     PersonalInformation = _mapper.Map<PersonalInformationDto>(current.PersonalInformation),
@@ -74,7 +94,8 @@ namespace masa_backend.Repositories
                     RemoveAt = current.RemoveAt,
                     Type = current.Type,
                     UpdateAt = current.UpdateAt,
-                    UserName = current.UserName
+                    UserName = current.UserName,
+                    Files = current.Files
                 })
                 .ToListAsync();
             return _mapper.Map<List<UserDto>>(userList);

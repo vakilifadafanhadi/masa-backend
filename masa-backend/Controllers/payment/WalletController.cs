@@ -189,7 +189,7 @@ namespace masa_backend.Controllers.payment
                             {
                                 Transaction = false,//send
                                 TransactionId = orderId,
-                                TransactionStatus = r.Code==200?"0":r.Message,
+                                TransactionStatus = r?.Code==200?"0":r?.Message,
                                 WalletId = wallet.Id,
                                 DtoRequest = bankResponse
                             });
@@ -220,10 +220,10 @@ namespace masa_backend.Controllers.payment
         public async Task<ActionResult<ResponceMV>> Transfer([FromBody] TransferRequestModelView request, [FromRoute] Guid fromId, [FromRoute] string toPersonalityId)
         {
             var toId = _repository.UserRepository.GetByPersonalityId(toPersonalityId).PersonId;
-            return Ok(await Transfer(request, fromId, toId));
+            return Ok(await Transferto(request, fromId, toId));
         }
         [HttpPost, Route(template:"[action]/{fromId}/{toId}")]
-        public async Task<ActionResult<ResponceMV>> Transfer([FromBody] TransferRequestModelView request, [FromRoute]Guid fromId, [FromRoute]Guid toId)
+        public async Task<ActionResult<ResponceMV>> Transferto([FromBody] TransferRequestModelView request, [FromRoute]Guid fromId, [FromRoute]Guid toId)
         {
             ResponceMV responce = new();
             try
@@ -280,6 +280,8 @@ namespace masa_backend.Controllers.payment
                     });
                 await _repository.SaveAsync();
                 responce.Success = true;
+                responce.Warnings.Add(toWallet.Amount);
+                responce.Warnings.Add(fromWallet.Amount);
                 return Ok(responce);
             }
             catch (Exception ex)

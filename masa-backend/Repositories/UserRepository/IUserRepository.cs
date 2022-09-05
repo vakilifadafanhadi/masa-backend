@@ -6,7 +6,7 @@ namespace masa_backend.Repositories
     {
         Task AddAsync(UserDto user);
         Task UpdateAsync(UserDto user);
-        Task<List<UserDto>> GetPaginationAsync(int page, int pageSize);
+        Task<List<UserDto>> GetPaginationAsync(int page, int pageSize,int? userType);
         Task<int> CountAsync();
         UserDto GetUser(Guid id);
         UserDto Login(LoginModelView user);

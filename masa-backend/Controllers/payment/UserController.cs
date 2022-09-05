@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using masa_backend.Repositories;
 using masa_backend.ModelViews;
+using System.Net.Http.Headers;
+using System.IO;
 
 namespace masa_backend.Controllers.payment
 {
@@ -20,15 +21,15 @@ namespace masa_backend.Controllers.payment
             ResponceWithData<string> responce = new();
             try
             {
-                var country = await _repository.CountryRepository.AddAsync(request?.Country);
+                var country = await _repository.CountryRepository.AddAsync(request?.Country!);
                 string token = country.Continent + request?.Gender + request?.NationalCode;
                 var person = await _repository.PersonalInformationRepository.AddAsync(
                     new PersonalInformationDto
                     {
-                        FirstName = request?.FirstName,
-                        LastName = request?.LastName,
-                        NationalCode = request?.NationalCode,
-                        Mobile = request?.Mobile,
+                        FirstName = request?.FirstName!,
+                        LastName = request?.LastName!,
+                        NationalCode = request?.NationalCode!,
+                        Mobile = request?.Mobile!,
                         Gender = request?.Gender,
                         CountryId = country.Id,
                         PersonalIdentity = token
@@ -40,7 +41,7 @@ namespace masa_backend.Controllers.payment
                     {
                         PersonId = person.Id,
                         Key = key,
-                        Token = Cryptor.Encrypt(token+"00", key),
+                        Token = Cryptor.Encrypt(token + "00", key),
                         UserName = request?.NationalCode,
                         Pass = request?.Pass
                     });
@@ -101,8 +102,8 @@ namespace masa_backend.Controllers.payment
             }
             finally { _repository.Dispose(); }
         }
-        [HttpPost,Route(template:"[action]/{personId}/{userId}")]
-        public async Task<ActionResult<ResponceMV>> EditPersonInfo([FromBody]RegisterModelView request, [FromRoute]Guid personId, [FromRoute]Guid userId)
+        [HttpPost, Route(template: "[action]/{personId}/{userId}")]
+        public async Task<ActionResult<ResponceMV>> EditPersonInfo([FromBody] RegisterModelView request, [FromRoute] Guid personId, [FromRoute] Guid userId)
         {
             ResponceMV responce = new();
             try
@@ -141,8 +142,8 @@ namespace masa_backend.Controllers.payment
                 _repository.Dispose();
             }
         }
-        [HttpGet,Route(template:"[action]/{personId}")]
-        public ActionResult<ResponceWithData<RegisterModelView>> GetPersonalInformations([FromRoute]Guid personId)
+        [HttpGet, Route(template: "[action]/{personId}")]
+        public ActionResult<ResponceWithData<RegisterModelView>> GetPersonalInformations([FromRoute] Guid personId)
         {
             var result = new ResponceWithData<RegisterModelView>();
             try
@@ -156,11 +157,11 @@ namespace masa_backend.Controllers.payment
                 res.Country = _repository.CountryRepository.Get((Guid)res.CountryId);
                 result.Data = new RegisterModelView
                 {
-                    Country = res?.Country??new CountryDto(),
+                    Country = res?.Country ?? new CountryDto(),
                     FirstName = res?.FirstName,
                     LastName = res?.LastName,
-                    Gender =res?.Gender??0,
-                    Mobile = res?.Mobile??"",
+                    Gender = res?.Gender ?? 0,
+                    Mobile = res?.Mobile ?? "",
                     NationalCode = res?.NationalCode
                 };
                 result.Success = true;
@@ -176,15 +177,30 @@ namespace masa_backend.Controllers.payment
                 _repository.Dispose();
             }
         }
-        [HttpPost, Route(template:"[action]/{userId}")]
-        public async Task<ActionResult<ResponceMV>> BusinessAccountRequest([FromRoute]Guid userId, [FromBody]string file)
+        [HttpPost, DisableRequestSizeLimit, Route(template: "[action]/{userId}")]
+        public async Task<ActionResult<ResponceMV>> BusinessAccountRequest([FromRoute] Guid userId)
         {
             var responce = new ResponceMV();
             try
             {
+                var formCollection = await Request.ReadFormAsync();
+                var file = formCollection.Files[0];
+                var folderName = Path.Combine("wwwroot", "Files", userId.ToString()!);
+                var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+                if (file.Length <= 0)
+                    return BadRequest(responce);
+                if (!Directory.Exists(pathToSave))
+                    Directory.CreateDirectory(pathToSave);
+                var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition)?.FileName?.Trim('"');
+                var fullPath = Path.Combine(pathToSave, fileName!);
+                var dbPath = Path.Combine(folderName, fileName!);
+                using (var stream = new FileStream(fullPath, FileMode.Create))
+                {
+                    file.CopyTo(stream);
+                }
                 var user = _repository.UserRepository.GetUser(userId);
                 user.Type = 10;
-                user.Files = file;
+                user.Files = fileName;
                 await _repository.UserRepository.UpdateAsync(user);
                 await _repository.SaveAsync();
                 responce.Success = true;
@@ -200,9 +216,8 @@ namespace masa_backend.Controllers.payment
                 _repository.Dispose();
             }
         }
-        
-        [HttpPost, Route(template:"[action]")]
-        public ActionResult<ResponceWithData<PersonalInformationDto>> GetPersonalInfoByUserToken(TokenGetter request) 
+        [HttpPost, Route(template: "[action]")]
+        public ActionResult<ResponceWithData<PersonalInformationDto>> GetPersonalInfoByUserToken(TokenGetter request)
         {
             var result = new ResponceWithData<PersonalInformationDto>();
             try
