@@ -7,7 +7,7 @@
         public string? UserName { get; set; } = default!;
         public string? Key { get; set; }
         public string? Pass { get; set; }
-        public string? Files { get; set; }
+        public List<FileDto>? Files { get; set; }
         public Guid PersonId { get; set; }
         public PersonalInformationDto? PersonalInformation { get; set; }
         //public UserDto()

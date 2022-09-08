@@ -17,8 +17,9 @@ namespace masa_backend.ModelViews.AmootSms
         }
         public async Task<SendResult> SendMessageAsync(string text,string number)
         {
-
-            var result = await _client.SendSimpleAsync(
+            try
+            {
+                var result = await _client.SendSimpleAsync(
                 UserName,
                 Password,
                 DateTime.Now,
@@ -28,22 +29,21 @@ namespace masa_backend.ModelViews.AmootSms
                 {
                     number
                 });
-            return result;
-            //if (result.Status == AmootSMS.Status.Success)
-            //{
-            //    //خروجی
-            //}
-            //return
-            //    await 
-            //    _client
-            //    .SendOTPAsync(
-            //        UserName, 
-            //        Password, 
-            //        DateTime.Now, 
-            //        name + "عزیز. رمز عبور شما در ماسا بانک", 
-            //        LineNumber, 
-            //        number, 
-            //        CodeLength);
+                return result;
+            }
+            catch
+            {
+                var sendResult = new SendResult
+                {
+                    Status = Status.Failed,
+                };
+                return sendResult;
+            }
+            finally
+            {
+                _client.Abort();
+                _client.Close();
+            }
         }
     }
 }

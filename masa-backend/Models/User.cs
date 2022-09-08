@@ -8,7 +8,7 @@
         public string? Key { get; set; }
         public string? Pass { get; set; }
         public Guid? PersonId { get; set; }
-        public string? Files { get; set; }
+        public List<File>? Files { get; set; }
         public PersonalInformation? PersonalInformation { get; set; }
     }
 }

@@ -85,6 +85,33 @@ namespace masa_backend.Migrations
                     b.ToTable("Countries");
                 });
 
+            modelBuilder.Entity("masa_backend.Models.File", b =>
+                {
+                    b.Property<Guid?>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RemoveAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Files");
+                });
+
             modelBuilder.Entity("masa_backend.Models.PersonalInformation", b =>
                 {
                     b.Property<Guid?>("Id")
@@ -196,9 +223,6 @@ namespace masa_backend.Migrations
 
                     b.Property<DateTime?>("CreateAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Files")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Key")
                         .HasColumnType("nvarchar(max)");
@@ -313,6 +337,15 @@ namespace masa_backend.Migrations
                     b.Navigation("Province");
                 });
 
+            modelBuilder.Entity("masa_backend.Models.File", b =>
+                {
+                    b.HasOne("masa_backend.Models.User", "User")
+                        .WithMany("Files")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("masa_backend.Models.PersonalInformation", b =>
                 {
                     b.HasOne("masa_backend.Models.City", "City")
@@ -396,6 +429,11 @@ namespace masa_backend.Migrations
                     b.Navigation("Citys");
 
                     b.Navigation("PersonalInformation");
+                });
+
+            modelBuilder.Entity("masa_backend.Models.User", b =>
+                {
+                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("masa_backend.Models.Wallet", b =>

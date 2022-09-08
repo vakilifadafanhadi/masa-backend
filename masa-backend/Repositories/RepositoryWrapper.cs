@@ -12,6 +12,7 @@ namespace masa_backend.Repositories
         private IWalletRepository? _walletRepository;
         private IWalletHistoryRepository? _walletHistoryRepository;
         private ICountryRepository? _countryRepository;
+        private IFileRepository? _fileRepository;
         public RepositoryWrapper(MasaDbContext masaDbContext, IMapper mapper)
         {
             _masaDbContext = masaDbContext;
@@ -58,6 +59,13 @@ namespace masa_backend.Repositories
             get
             {
                 return _countryRepository ?? new CountryRepository(_masaDbContext, _mapper);
+            }
+        }
+        public IFileRepository FileRepository
+        {
+            get
+            {
+                return _fileRepository ?? new FileRepository(_masaDbContext, _mapper);
             }
         }
         public void Dispose()

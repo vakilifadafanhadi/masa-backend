@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using masa_backend.Models;
+using File = masa_backend.Models.File;
 
 namespace masa_backend
 {
@@ -12,6 +13,7 @@ namespace masa_backend
         public DbSet<User>? Users { get; set; }
         public DbSet<Wallet>? Wallets { get; set; }
         public DbSet<WalletHistory>? WalletHistories { get; set; }
+        public DbSet<File>? Files { get; set; }
         public MasaDbContext(DbContextOptions<MasaDbContext> options) : base(options)
         {
         }
@@ -88,6 +90,10 @@ namespace masa_backend
                 .WithOne(person => person.User)
                 .HasForeignKey<User>(user => user.PersonId)
                 .HasPrincipalKey<PersonalInformation>(person => person.Id);
+                user.HasMany(user => user.Files)
+                .WithOne(file => file.User)
+                .HasForeignKey(file => file.UserId)
+                .HasPrincipalKey(user => user.Id);
             });
             modelBuilder.Entity<Wallet>(wallet =>
             {
@@ -106,6 +112,13 @@ namespace masa_backend
                 .WithMany(wallet => wallet.WalletHistories)
                 .HasForeignKey(walletHistory=>walletHistory.WalletId)
                 .HasPrincipalKey(wallet=>wallet.Id);
+            });
+            modelBuilder.Entity<File>(file =>
+            {
+                file.HasOne(file => file.User)
+                .WithMany(user => user.Files)
+                .HasForeignKey(file => file.UserId)
+                .HasPrincipalKey(user => user.Id);
             });
         }
     }

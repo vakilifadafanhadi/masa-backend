@@ -14,13 +14,6 @@ namespace masa_backend.Repositories
                 .FirstOrDefault());
             if (oldCountry == null)
             {
-                string sContinent = GetByQuery()
-                    .OrderBy(current=>current.CreateAt)
-                    .Last().Continent!;
-                int continent = int.Parse(sContinent) + 1;
-                country.Continent = continent.ToString();
-                while (country.Continent.Length < 3)
-                    country.Continent = "0" + country.Continent;
                 oldCountry = country;
                 await AddAsync(_mapper.Map<Country>(country));
             }

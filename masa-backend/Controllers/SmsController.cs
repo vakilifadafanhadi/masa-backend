@@ -30,7 +30,6 @@ namespace masa_backend.Controllers
                 responce.Add(ex);
                 return BadRequest(responce);
             }
-            
         }
     }
 }

@@ -23,20 +23,7 @@ namespace masa_backend.Repositories
         public async Task<List<UserDto>> GetPaginationAsync(int page, int pageSize, int? userType)
         {
             var query = GetByQuery()
-                .Select(current => new UserDto
-                {
-                    Id = (Guid)current.Id!,
-                    CreateAt = (DateTime)current.CreateAt!,
-                    Pass = current.Pass,
-                    PersonalInformation = _mapper.Map<PersonalInformationDto>(current.PersonalInformation),
-                    PersonId = (Guid)current.PersonId!,
-                    Token = current.Token,
-                    RemoveAt = current.RemoveAt,
-                    Type = current.Type,
-                    UpdateAt = current.UpdateAt,
-                    UserName = current.UserName,
-                    Files = current.Files
-                });
+                .Select(current=>_mapper.Map<UserDto>(current));
             if(userType!=null)
                 query = query.Where(x => x.Type==userType);
             return await query
@@ -83,20 +70,7 @@ namespace masa_backend.Repositories
         {
             var userList = await GetByQuery()
                 .OrderBy(current=>current.CreateAt)
-                .Select(current => new UserDto
-                {
-                    Id = (Guid)current.Id!,
-                    CreateAt = (DateTime)current.CreateAt!,
-                    Pass = current.Pass,
-                    PersonalInformation = _mapper.Map<PersonalInformationDto>(current.PersonalInformation),
-                    PersonId = (Guid)current.PersonId!,
-                    Token = current.Token,
-                    RemoveAt = current.RemoveAt,
-                    Type = current.Type,
-                    UpdateAt = current.UpdateAt,
-                    UserName = current.UserName,
-                    Files = current.Files
-                })
+                .Select(current => _mapper.Map<UserDto>(current))
                 .ToListAsync();
             return _mapper.Map<List<UserDto>>(userList);
         }

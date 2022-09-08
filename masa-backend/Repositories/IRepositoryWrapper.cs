@@ -8,6 +8,7 @@
         IWalletRepository WalletRepository { get; }
         IWalletHistoryRepository WalletHistoryRepository { get; }
         ICountryRepository CountryRepository { get; }
+        IFileRepository FileRepository { get; }
         void Save();
         Task SaveAsync();
     }

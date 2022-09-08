@@ -12,7 +12,6 @@ namespace masa_backend.Controllers.payment
     {
         private readonly IRepositoryWrapper _repository;
         private static Random random = new();
-
         public WalletController(IRepositoryWrapper repository)
         {
             _repository = repository;
@@ -95,7 +94,6 @@ namespace masa_backend.Controllers.payment
                 _repository.Dispose();
             }
         }
-        
         [HttpPost, Route(template: "[action]")]
         public async Task<ActionResult<ResponceWithData<string>>> Deposit(ModelViews.NextPay.GenerateTokenDto request)//DtoRequest request, [FromRoute] Guid personId)
         {
